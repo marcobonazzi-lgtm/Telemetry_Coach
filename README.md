@@ -1,4 +1,5 @@
-<img width="1918" height="1017" alt="image" src="https://github.com/user-attachments/assets/d824c07e-627c-4793-a7a2-c28d1e674cd7" /># Telemetry_Coach
+<img width="1918" height="1022" alt="image" src="https://github.com/user-attachments/assets/b1c0ac8b-5bf4-468a-9447-38587e32acaf" />
+
 
 #GUIDA ITA:
 coach di telemetrie sviluppato per Assetto Corsa, esso preleva i dati da un file CSV e li converte in grafici e consigli sul veicolo, performance, coaching e setup.
