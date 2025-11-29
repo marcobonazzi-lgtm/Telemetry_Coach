@@ -1,4 +1,4 @@
-# Telemetry_Coach
+<img width="1918" height="1017" alt="image" src="https://github.com/user-attachments/assets/d824c07e-627c-4793-a7a2-c28d1e674cd7" /># Telemetry_Coach
 
 #GUIDA ITA:
 coach di telemetrie sviluppato per Assetto Corsa, esso preleva i dati da un file CSV e li converte in grafici e consigli sul veicolo, performance, coaching e setup.
@@ -95,3 +95,19 @@ Import the CSV file either by clicking the Select CSV File button or by dragging
 Wait a few seconds for the file to load. The app will then be ready for use.
 
 ⚡ Tip: After importing your first file, you can leave the app running and replace the CSV file with a new one at any time. We recommend keeping the app open while recording new sessions so you can instantly compare your telemetry data.
+
+APP SCREENSHOT: 
+<img width="1918" height="1018" alt="image" src="https://github.com/user-attachments/assets/60b8b335-9102-4186-8b95-99eb9de98caa" />
+<img width="1918" height="990" alt="image" src="https://github.com/user-attachments/assets/bf7e1f17-475a-4c83-891c-d64d71e1d37d" />
+<img width="1918" height="1017" alt="image" src="https://github.com/user-attachments/assets/7cf7d7a3-1d56-4f60-bb04-7c872339a9b4" />
+<img width="1918" height="1017" alt="image" src="https://github.com/user-attachments/assets/1f02ddf5-7b76-44fd-b6da-bcac1b3d0a46" />
+<img width="1918" height="1018" alt="image" src="https://github.com/user-attachments/assets/ce9282fd-d506-4695-ae9b-c0897b56f2c0" />
+<img width="1918" height="1018" alt="image" src="https://github.com/user-attachments/assets/6c006de8-1a92-452b-8c4c-271f88561bfc" />
+<img width="1918" height="1016" alt="image" src="https://github.com/user-attachments/assets/4bd03b20-51bf-43d0-aac2-c7f88447c0e7" />
+<img width="1918" height="1017" alt="image" src="https://github.com/user-attachments/assets/54005c0a-1518-4ffc-aebe-d3c19f9d9d26" />
+
+
+
+
+
+
