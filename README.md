@@ -1,4 +1,4 @@
-<img width="1918" height="1078" alt="image" src="https://github.com/user-attachments/assets/f7fdb2e3-2354-4b72-bd0e-304a916e2b28" /><img width="1918" height="1022" alt="image" src="https://github.com/user-attachments/assets/b1c0ac8b-5bf4-468a-9447-38587e32acaf" />
+src="https://github.com/user-attachments/assets/b1c0ac8b-5bf4-468a-9447-38587e32acaf" />
 
 
 #GUIDA ITA:
@@ -100,6 +100,7 @@ Wait a few seconds for the file to load. The app will then be ready for use.
 APP SCREENSHOT: 
 <img width="1918" height="1018" alt="image" src="https://github.com/user-attachments/assets/60b8b335-9102-4186-8b95-99eb9de98caa" />
 <img width="1918" height="990" alt="image" src="https://github.com/user-attachments/assets/bf7e1f17-475a-4c83-891c-d64d71e1d37d" />
+<img width="1918" height="956" alt="image" src="https://github.com/user-attachments/assets/c2d71122-9363-4502-b255-431ff8dcec9a" />
 <img width="1918" height="992" alt="image" src="https://github.com/user-attachments/assets/5e83d377-ffab-4ba4-83ff-154411ffccb4" />
 <img width="1918" height="987" alt="image" src="https://github.com/user-attachments/assets/ad6bd7d8-62f3-4df8-9179-d8a18186b119" />
 <img width="1918" height="1017" alt="image" src="https://github.com/user-attachments/assets/1f02ddf5-7b76-44fd-b6da-bcac1b3d0a46" />
