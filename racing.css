@@ -1,0 +1,200 @@
+/* TEMA RACING (Aggressive) */
+.root {
+    -fx-base: #1c1917;
+    -fx-background: #1c1917;
+    -fx-control-inner-background: #292524;
+    -fx-control-inner-background-alt: #0c0a09;
+    -fx-accent: #dc2626;
+    -fx-focus-color: #ef4444;
+    -fx-text-base-color: #e7e5e4;
+    /* --- COLORI WIDGET (Scuri) --- */
+    -fx-widget-bg: #0f172a;          /* Sfondo Card */
+    -fx-widget-border: #1e293b;      /* Bordo Card */
+    -fx-widget-title: #ffffff;       /* Titolo Widget */
+    -fx-widget-text-primary: #f1f5f9; /* Valori principali */
+    -fx-widget-text-secondary: #94a3b8; /* Etichette unità/nomi */
+    -fx-widget-track: #334155;       /* Sfondo delle barre/gauge */
+}
+
+/* --- Welcome View --- */
+.root-welcome {
+    -fx-background-color: linear-gradient(to bottom, #1c1917, #450a0a);
+}
+.welcome-title {
+    -fx-text-fill: #fecaca;
+    -fx-effect: dropshadow(gaussian, rgba(220, 38, 38, 0.8), 15, 0.3, 0, 0);
+}
+.welcome-subtitle {
+    -fx-text-fill: #d6d3d1;
+    -fx-font-size: 18px;
+}
+.welcome-label-muted {
+    -fx-text-fill: #a8a29e;
+    -fx-font-weight: bold;
+}
+
+/* Bottoni Importazione */
+.button-primary {
+    -fx-background-color: #dc2626;
+    -fx-text-fill: white;
+    -fx-background-radius: 4;
+    -fx-font-weight: bold;
+    -fx-font-size: 16px;
+    -fx-border-color: #b91c1c;
+    -fx-border-width: 0 0 4 0; /* Effetto 3D fondo */
+}
+.button-primary:hover {
+    -fx-background-color: #ef4444;
+    -fx-effect: dropshadow(three-pass-box, rgba(220, 38, 38, 0.6), 10, 0, 0, 0);
+}
+.button-primary:pressed { -fx-border-width: 0 0 0 0; -fx-translate-y: 4; }
+
+.button-secondary {
+    -fx-background-color: #292524;
+    -fx-text-fill: #a8a29e;
+    -fx-background-radius: 4;
+    -fx-border-color: #44403c;
+    -fx-font-size: 16px;
+}
+.button-secondary:hover { -fx-text-fill: white; -fx-border-color: #dc2626; }
+
+.preview-box {
+    -fx-background-color: rgba(0,0,0,0.6);
+    -fx-background-radius: 8;
+    -fx-border-color: #7f1d1d;
+    -fx-border-radius: 8;
+}
+.button-preview {
+    -fx-background-color: #dc2626;
+    -fx-text-fill: white;
+    -fx-font-weight: bold;
+}
+
+/* --- Track View & Cards --- */
+.card-panel, .map-card {
+    -fx-background-color: #292524;
+    -fx-background-radius: 4;
+    -fx-border-color: #44403c;
+    -fx-border-radius: 4;
+}
+.view-title { -fx-font-size: 22px; -fx-font-weight: bold; -fx-text-fill: #fecaca; }
+.view-subtitle { -fx-font-size: 13px; -fx-text-fill: #a8a29e; }
+.section-title { -fx-font-weight: bold; -fx-font-size: 14px; -fx-text-fill: #ef4444; }
+.tip-label { -fx-text-fill: #e7e5e4; }
+
+/* --- Grafici --- */
+.chart-title { -fx-text-fill: #fecaca; }
+.axis-label { -fx-text-fill: #a8a29e; }
+.axis { -fx-tick-label-fill: #a8a29e; }
+.chart-vertical-grid-lines, .chart-horizontal-grid-lines {
+    -fx-stroke: #44403c;
+    -fx-stroke-dash-array: 5 5;
+}
+
+/* Compare View Styles */
+.section-pane {
+    -fx-background-color: #1e293b;
+    -fx-border-color: #334155;
+    -fx-border-radius: 8;
+    -fx-background-radius: 8;
+}
+.session-a-pane { -fx-background-color: #1e293b; -fx-border-color: #0ea5e9; }
+.session-b-pane { -fx-background-color: #1e293b; -fx-border-color: #8b5cf6; }
+.coach-pane     { -fx-background-color: #1e293b; -fx-border-color: #22c55e; }
+
+.narrative-box {
+    -fx-background-color: #334155;
+    -fx-border-color: #fbbf24;
+    -fx-text-fill: #f1f5f9;
+    -fx-padding: 10;
+    -fx-background-radius: 4;
+}
+.narrative-warning { -fx-border-color: #f97316; }
+
+.improvement-list > .title { -fx-background-color: rgba(34, 197, 94, 0.2); }
+.improvement-list .content { -fx-background-color: #064e3b; }
+.regression-list > .title { -fx-background-color: rgba(239, 68, 68, 0.2); }
+.regression-list .content { -fx-background-color: #450a0a; }
+
+.delta-good { -fx-text-fill: #4ade80; -fx-font-weight: bold; }
+.delta-bad  { -fx-text-fill: #f87171; -fx-font-weight: bold; }
+.delta-neutral { -fx-text-fill: #94a3b8; }
+.legend-label { -fx-text-fill: #cbd5e1; -fx-font-size: 11px; -fx-font-style: italic; }
+.coach-warning-label { -fx-text-fill: #fca5a5; -fx-border-color: #fca5a5; }
+
+/* --- CHAT ENGINEER & CARDS (Racing) --- */
+.analysis-scroll-pane, .analysis-scroll-pane .viewport { -fx-background-color: transparent; }
+
+/* La Card del consiglio (Effetto Vetro Scuro) */
+.advice-card {
+    -fx-background-color: rgba(255, 255, 255, 0.06);
+    -fx-background-radius: 6;
+    -fx-padding: 8;
+}
+.advice-card .label {
+    -fx-text-fill: #e7e5e4 !important; /* Testo chiaro */
+}
+
+.chat-list-view { -fx-background-color: transparent; }
+
+.chat-bubble-user {
+    -fx-background-color: #dc2626;
+    -fx-text-fill: white;
+    -fx-background-radius: 15 15 0 15;
+    -fx-padding: 8 12 8 12;
+}
+.chat-bubble-ai {
+    -fx-background-color: #292524;
+    -fx-text-fill: #e7e5e4;
+    -fx-background-radius: 15 15 15 0;
+    -fx-border-color: #44403c;
+    -fx-border-radius: 15 15 15 0;
+    -fx-padding: 8 12 8 12;
+}
+
+.report-header {
+    -fx-text-fill: #a8a29e;
+    -fx-font-weight: bold;
+    -fx-font-size: 11px;
+}
+.chat-input {
+    -fx-background-radius: 15;
+    -fx-background-color: #292524;
+    -fx-border-color: #44403c;
+    -fx-border-radius: 15;
+    -fx-text-fill: #e7e5e4;
+}
+
+/* --- Guide & Glossary View (Dark) --- */
+.glossary-toolbar { -fx-background-color: #1e293b; -fx-border-color: #334155; -fx-border-width: 0 0 1 0; }
+.quick-filter-btn { -fx-background-color: #334155; -fx-text-fill: #cbd5e1; -fx-background-radius: 10; -fx-font-size: 10px; }
+.quick-filter-btn:hover { -fx-background-color: #475569; -fx-text-fill: white; }
+.glossary-sidebar { -fx-background-color: #1e293b; -fx-border-color: #334155; -fx-border-width: 0 1 0 0; }
+.sidebar-header { -fx-text-fill: #94a3b8; -fx-font-size: 10px; -fx-font-weight: bold; -fx-padding: 5 10; }
+.glossary-list-view { -fx-background-color: transparent; }
+.glossary-list-view .list-cell { -fx-text-fill: #e2e8f0; -fx-padding: 5 10; }
+.glossary-list-view .list-cell:filled:selected { -fx-background-color: #3b82f6; -fx-text-fill: white; }
+.glossary-list-view .list-cell:filled:hover { -fx-background-color: #334155; }
+.glossary-scroll-pane, .glossary-scroll-pane .viewport { -fx-background-color: transparent; }
+.glossary-accordion { -fx-background-color: transparent; }
+.glossary-disclaimer { -fx-text-fill: #64748b; -fx-font-size: 10px; -fx-padding: 5 10; -fx-alignment: CENTER; }
+
+/* Glossary Cards Dark */
+.glossary-card { -fx-background-radius: 4; -fx-border-width: 0 0 0 3; -fx-effect: dropshadow(gaussian, rgba(0,0,0,0.3), 5, 0, 0, 1); }
+.card-def { -fx-background-color: #0f172a; -fx-border-color: #38bdf8; }
+.card-tips { -fx-background-color: #0f172a; -fx-border-color: #a3e635; }
+.card-title { -fx-font-weight: bold; -fx-font-size: 11px; }
+.card-def .card-title { -fx-text-fill: #38bdf8; }
+.card-tips .card-title { -fx-text-fill: #a3e635; }
+.card-text { -fx-fill: #cbd5e1; }
+.tech-details-label { -fx-text-fill: #94a3b8; -fx-font-size: 10px; -fx-font-family: 'Monospaced'; }
+
+/* Widget Coach & Timeline (Scuri) */
+.widget-card { -fx-background-color: -fx-control-inner-background; -fx-background-radius: 12; -fx-border-color: derive(-fx-base, 20%); -fx-border-width: 1; -fx-border-radius: 12; -fx-effect: dropshadow(gaussian, rgba(0,0,0,0.5), 10, 0, 0, 2); }
+.widget-inner-box { -fx-background-color: rgba(0,0,0,0.3); -fx-background-radius: 6; -fx-border-color: rgba(255,255,255,0.1); -fx-border-radius: 6; }
+.widget-title { -fx-text-fill: white; -fx-font-weight: 800; -fx-font-size: 14px; }
+.widget-value { -fx-text-fill: #e2e8f0; -fx-font-family: 'Monospaced'; -fx-font-weight: bold; }
+.widget-label { -fx-text-fill: #94a3b8; -fx-font-weight: bold; -fx-font-size: 10px; }
+.coach-tip-card { -fx-background-color: rgba(255,255,255,0.05); -fx-background-radius: 4; }
+.side-panel-title { -fx-font-weight: bold; -fx-font-size: 14px; -fx-text-fill: #22d3ee; }
+.side-panel-text { -fx-text-fill: #e2e8f0; }
