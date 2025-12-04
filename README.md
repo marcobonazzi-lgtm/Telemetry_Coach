@@ -1,4 +1,4 @@
-src="https://github.com/user-attachments/assets/b1c0ac8b-5bf4-468a-9447-38587e32acaf" />
+<img width="1918" height="992" alt="image" src="https://github.com/user-attachments/assets/5761b5b2-d07c-40b5-8499-9d0dd65fd9dc" />
 
 
 #GUIDA ITA:
