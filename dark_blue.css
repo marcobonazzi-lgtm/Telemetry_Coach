@@ -1,0 +1,170 @@
+/* TEMA DARK BLUE (Professional) */
+.root {
+    -fx-base: #0f172a;
+    -fx-background: #0f172a;
+    -fx-control-inner-background: #1e293b;
+    -fx-control-inner-background-alt: #0f172a;
+    -fx-accent: #3b82f6;
+    -fx-focus-color: #60a5fa;
+    -fx-text-base-color: #f1f5f9;
+    -fx-widget-bg: #0f172a;
+    -fx-widget-border: #1e293b;
+    -fx-widget-title: #ffffff;
+    -fx-widget-text-primary: #f1f5f9;
+    -fx-widget-text-secondary: #94a3b8;
+    -fx-widget-track: #334155;
+}
+
+/* --- Welcome View --- */
+.root-welcome { -fx-background-color: linear-gradient(to bottom right, #0f172a, #1e3a8a); }
+.welcome-title { -fx-text-fill: #f8fafc; -fx-effect: dropshadow(gaussian, rgba(0,0,0,0.5), 10, 0, 0, 3); }
+.welcome-subtitle { -fx-text-fill: #94a3b8; -fx-font-size: 18px; }
+.welcome-label-muted { -fx-text-fill: #64748b; -fx-font-weight: bold; }
+
+/* Bottoni Importazione */
+.button-primary { -fx-background-color: #3b82f6; -fx-text-fill: white; -fx-background-radius: 8; -fx-font-weight: bold; -fx-font-size: 16px; -fx-effect: dropshadow(gaussian, rgba(59, 130, 246, 0.4), 10, 0, 0, 4); }
+.button-primary:hover { -fx-background-color: #2563eb; }
+.button-secondary { -fx-background-color: #1e293b; -fx-text-fill: #cbd5e1; -fx-background-radius: 8; -fx-border-color: #334155; -fx-border-radius: 8; -fx-font-size: 16px; }
+.button-secondary:hover { -fx-background-color: #334155; -fx-text-fill: white; }
+.preview-box { -fx-background-color: #1e293b; -fx-background-radius: 12; -fx-border-color: #334155; -fx-border-radius: 12; }
+.button-preview { -fx-background-color: #3b82f6; -fx-text-fill: white; -fx-background-radius: 6; -fx-font-weight: bold; }
+
+/* --- Track View & Cards --- */
+.card-panel, .map-card { -fx-background-color: #1e293b; -fx-background-radius: 12; -fx-border-color: #334155; -fx-border-radius: 12; -fx-effect: dropshadow(gaussian, rgba(0,0,0,0.4), 15, 0, 0, 5); }
+.view-title { -fx-font-size: 22px; -fx-font-weight: bold; -fx-text-fill: #f1f5f9; }
+.view-subtitle { -fx-font-size: 13px; -fx-text-fill: #94a3b8; }
+.section-title { -fx-font-weight: bold; -fx-font-size: 14px; -fx-text-fill: #3b82f6; }
+.tip-label { -fx-text-fill: #e2e8f0; }
+
+/* --- Grafici --- */
+.chart-title { -fx-text-fill: #e2e8f0; }
+.axis-label { -fx-text-fill: #94a3b8; }
+.axis { -fx-tick-label-fill: #94a3b8; }
+.chart-vertical-grid-lines, .chart-horizontal-grid-lines { -fx-stroke: #334155; }
+.chart-plot-background { -fx-background-color: transparent; }
+
+/* Compare View Styles */
+.section-pane { -fx-background-color: #1e293b; -fx-border-color: #334155; -fx-border-radius: 8; -fx-background-radius: 8; }
+.session-a-pane { -fx-background-color: #1e293b; -fx-border-color: #0ea5e9; }
+.session-b-pane { -fx-background-color: #1e293b; -fx-border-color: #8b5cf6; }
+.coach-pane     { -fx-background-color: #1e293b; -fx-border-color: #22c55e; }
+.narrative-box { -fx-background-color: #334155; -fx-border-color: #fbbf24; -fx-text-fill: #f1f5f9; -fx-padding: 10; -fx-background-radius: 4; }
+.narrative-warning { -fx-border-color: #f97316; }
+.improvement-list > .title { -fx-background-color: rgba(34, 197, 94, 0.2); }
+.improvement-list .content { -fx-background-color: #064e3b; }
+.regression-list > .title { -fx-background-color: rgba(239, 68, 68, 0.2); }
+.regression-list .content { -fx-background-color: #450a0a; }
+.delta-good { -fx-text-fill: #4ade80; -fx-font-weight: bold; }
+.delta-bad  { -fx-text-fill: #f87171; -fx-font-weight: bold; }
+.delta-neutral { -fx-text-fill: #94a3b8; }
+.legend-label { -fx-text-fill: #cbd5e1; -fx-font-size: 11px; -fx-font-style: italic; }
+.coach-warning-label { -fx-text-fill: #fca5a5; -fx-border-color: #fca5a5; }
+
+/* --- CHAT ENGINEER (Dark Blue) --- */
+.analysis-scroll-pane, .analysis-scroll-pane .viewport { -fx-background-color: transparent; }
+
+/* Card Consiglio (Effetto Vetro Scuro) */
+.advice-card {
+    -fx-background-color: rgba(255, 255, 255, 0.06);
+    -fx-background-radius: 6;
+    -fx-padding: 8;
+}
+.advice-card .label {
+    -fx-text-fill: #f1f5f9 !important; /* Testo chiaro */
+}
+
+.chat-list-view { -fx-background-color: transparent; }
+
+.chat-bubble-user {
+    -fx-background-color: #3b82f6;
+    -fx-text-fill: white;
+    -fx-background-radius: 15 15 0 15;
+    -fx-padding: 8 12 8 12;
+}
+.chat-bubble-ai {
+    -fx-background-color: #1e293b;
+    -fx-text-fill: #f1f5f9;
+    -fx-background-radius: 15 15 15 0;
+    -fx-border-color: #334155;
+    -fx-border-radius: 15 15 15 0;
+    -fx-padding: 8 12 8 12;
+}
+
+.report-header {
+    -fx-text-fill: #94a3b8;
+    -fx-font-weight: bold;
+    -fx-font-size: 11px;
+}
+.chat-input {
+    -fx-background-radius: 15;
+    -fx-background-color: #1e293b;
+    -fx-border-color: #334155;
+    -fx-border-radius: 15;
+    -fx-text-fill: white;
+}
+
+/* --- Guide & Glossary --- */
+.glossary-toolbar { -fx-background-color: #1e293b; -fx-border-color: #334155; -fx-border-width: 0 0 1 0; }
+.quick-filter-btn { -fx-background-color: #334155; -fx-text-fill: #cbd5e1; -fx-background-radius: 10; -fx-font-size: 10px; }
+.quick-filter-btn:hover { -fx-background-color: #475569; -fx-text-fill: white; }
+.glossary-sidebar { -fx-background-color: #1e293b; -fx-border-color: #334155; -fx-border-width: 0 1 0 0; }
+.sidebar-header { -fx-text-fill: #94a3b8; -fx-font-size: 10px; -fx-font-weight: bold; -fx-padding: 5 10; }
+.glossary-list-view { -fx-background-color: transparent; }
+.glossary-list-view .list-cell { -fx-text-fill: #e2e8f0; -fx-padding: 5 10; }
+.glossary-list-view .list-cell:filled:selected { -fx-background-color: #3b82f6; -fx-text-fill: white; }
+.glossary-list-view .list-cell:filled:hover { -fx-background-color: #334155; }
+.glossary-scroll-pane, .glossary-scroll-pane .viewport { -fx-background-color: transparent; }
+.glossary-accordion { -fx-background-color: transparent; }
+.glossary-disclaimer { -fx-text-fill: #64748b; -fx-font-size: 10px; -fx-padding: 5 10; -fx-alignment: CENTER; }
+.glossary-card { -fx-background-radius: 4; -fx-border-width: 0 0 0 3; -fx-effect: dropshadow(gaussian, rgba(0,0,0,0.3), 5, 0, 0, 1); }
+.card-def { -fx-background-color: #0f172a; -fx-border-color: #38bdf8; }
+.card-tips { -fx-background-color: #0f172a; -fx-border-color: #a3e635; }
+.card-title { -fx-font-weight: bold; -fx-font-size: 11px; }
+.card-def .card-title { -fx-text-fill: #38bdf8; }
+.card-tips .card-title { -fx-text-fill: #a3e635; }
+.card-text { -fx-fill: #cbd5e1; }
+.tech-details-label { -fx-text-fill: #94a3b8; -fx-font-size: 10px; -fx-font-family: 'Monospaced'; }
+
+/* Widget Coach & Timeline */
+.widget-card { -fx-background-color: -fx-control-inner-background; -fx-background-radius: 12; -fx-border-color: derive(-fx-base, 20%); -fx-border-width: 1; -fx-border-radius: 12; -fx-effect: dropshadow(gaussian, rgba(0,0,0,0.5), 10, 0, 0, 2); }
+.widget-inner-box { -fx-background-color: rgba(0,0,0,0.3); -fx-background-radius: 6; -fx-border-color: rgba(255,255,255,0.1); -fx-border-radius: 6; }
+.widget-title { -fx-text-fill: white; -fx-font-weight: 800; -fx-font-size: 14px; }
+.widget-value { -fx-text-fill: #e2e8f0; -fx-font-family: 'Monospaced'; -fx-font-weight: bold; }
+.widget-label { -fx-text-fill: #94a3b8; -fx-font-weight: bold; -fx-font-size: 10px; }
+.coach-tip-card { -fx-background-color: rgba(255,255,255,0.05); -fx-background-radius: 4; }
+.side-panel-title { -fx-font-weight: bold; -fx-font-size: 14px; -fx-text-fill: #22d3ee; }
+.side-panel-text { -fx-text-fill: #e2e8f0; }
+/* --- FIX CHAT DEFINITIVO --- */
+
+/* Assicura che la lista non mostri scrollbar orizzontale */
+.chat-list-view {
+    -fx-background-color: transparent;
+    -fx-hbar-policy: never; /* Nasconde scrollbar orizzontale */
+}
+
+/* Bolla Utente */
+.chat-bubble-user {
+    -fx-background-color: #0078D7; /* Blu standard */
+    -fx-text-fill: white;          /* Testo BIANCO sempre leggibile */
+    -fx-background-radius: 15 15 0 15;
+    -fx-font-size: 13px;
+}
+
+/* Bolla AI */
+.chat-bubble-ai {
+    -fx-background-color: #333333; /* Grigio scuro (default) */
+    -fx-text-fill: #f0f0f0;        /* Testo CHIARO */
+    -fx-background-radius: 15 15 15 0;
+    -fx-border-color: #555555;
+    -fx-border-radius: 15 15 15 0;
+    -fx-font-size: 13px;
+}
+
+/* (SOLO PER light.css e classic.css, decommenta questo blocco in quei file) */
+/*
+.root-light .chat-bubble-ai, .root .chat-bubble-ai {
+    -fx-background-color: #ffffff;
+    -fx-text-fill: #333333;
+    -fx-border-color: #cccccc;
+}
+*/

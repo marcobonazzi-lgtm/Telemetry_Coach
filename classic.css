@@ -1,0 +1,156 @@
+/* TEMA CLASSICO (Default) */
+.root {
+    -fx-base: #ececec;
+    -fx-accent: #0096C9;
+    -fx-focus-color: #0096C9;
+    -fx-faint-focus-color: #0096C922;
+    -fx-text-base-color: #333333;
+    -fx-widget-bg: #ffffff;
+    -fx-widget-border: #cbd5e1;
+    -fx-widget-title: #0f172a;
+    -fx-widget-text-primary: #1e293b;
+    -fx-widget-text-secondary: #64748b;
+    -fx-widget-track: #e2e8f0;
+}
+
+/* --- Welcome View --- */
+.root-welcome { -fx-background-color: linear-gradient(to bottom, #2b2b2b, #1a1a1a); }
+.welcome-title { -fx-text-fill: white; -fx-effect: dropshadow(gaussian, rgba(0,0,0,0.8), 10, 0, 0, 2); }
+.welcome-subtitle { -fx-text-fill: #d0d7de; -fx-font-size: 18px; }
+.welcome-label-muted { -fx-text-fill: #8b949e; -fx-font-weight: bold; }
+
+/* Bottoni */
+.button-primary { -fx-background-color: linear-gradient(#409cff, #1f6feb); -fx-text-fill: white; -fx-background-radius: 10; -fx-font-weight: bold; -fx-font-size: 16px; }
+.button-primary:hover { -fx-background-color: linear-gradient(#58a6ff, #2f7efb); }
+.button-secondary { -fx-background-color: rgba(255,255,255,0.1); -fx-text-fill: #e6edf3; -fx-background-radius: 10; -fx-border-color: rgba(255,255,255,0.25); -fx-border-radius: 10; -fx-font-size: 16px; }
+.preview-box { -fx-background-color: rgba(255,255,255,0.05); -fx-background-radius: 12; }
+.button-preview { -fx-background-color: rgba(56,139,253,0.15); -fx-text-fill: #58a6ff; -fx-border-color: #58a6ff; -fx-border-radius: 6; }
+
+/* --- Track & Cards --- */
+.card-panel, .map-card { -fx-background-color: white; -fx-background-radius: 12; -fx-effect: dropshadow(gaussian, rgba(0,0,0,0.1), 10, 0, 0, 2); }
+.view-title { -fx-font-size: 22px; -fx-font-weight: bold; -fx-text-fill: #333; }
+.view-subtitle { -fx-font-size: 13px; -fx-text-fill: #666; }
+.section-title { -fx-font-weight: bold; -fx-font-size: 14px; -fx-text-fill: #333; }
+.tip-label { -fx-text-fill: #333; }
+
+/* Compare View */
+.section-pane { -fx-background-color: white; -fx-border-color: #cbd5e1; -fx-border-radius: 8; -fx-background-radius: 8; }
+.session-a-pane { -fx-background-color: #f0f9ff; }
+.session-b-pane { -fx-background-color: #f5f3ff; }
+.coach-pane     { -fx-background-color: #f0fdf4; }
+.narrative-box { -fx-background-color: #fffbeb; -fx-border-color: #fcd34d; -fx-text-fill: #333; -fx-padding: 10; -fx-background-radius: 4; }
+.narrative-warning { -fx-background-color: #fff7ed; -fx-border-color: #fdba74; }
+.improvement-list { -fx-background-color: #dcfce7; -fx-text-fill: #166534; }
+.regression-list  { -fx-background-color: #fee2e2; -fx-text-fill: #991b1b; }
+.delta-good { -fx-text-fill: #15803d; -fx-font-weight: bold; }
+.delta-bad  { -fx-text-fill: #b91c1c; -fx-font-weight: bold; }
+.delta-neutral { -fx-text-fill: #64748b; }
+.legend-label { -fx-text-fill: #666; -fx-font-size: 11px; -fx-font-style: italic; }
+.coach-warning-label { -fx-text-fill: red; -fx-border-color: red; }
+
+/* --- CHAT ENGINEER & CARDS (Classic - FIX VISIBILITÀ) --- */
+.analysis-scroll-pane, .analysis-scroll-pane .viewport { -fx-background-color: transparent; }
+
+/* Card Consiglio (Bianco Solido su sfondo grigio) */
+.advice-card {
+    -fx-background-color: #ffffff;
+    -fx-background-radius: 6;
+    -fx-border-color: #d1d5db;
+    -fx-border-radius: 6;
+    -fx-padding: 8;
+    -fx-effect: dropshadow(gaussian, rgba(0,0,0,0.08), 3, 0, 0, 1);
+}
+.advice-card .label {
+    -fx-text-fill: #111827 !important; /* Testo scuro forzato */
+}
+
+.chat-list-view { -fx-background-color: transparent; }
+
+.chat-bubble-user {
+    -fx-background-color: #0078D7; /* Windows Blue */
+    -fx-text-fill: white;
+    -fx-background-radius: 15 15 0 15;
+    -fx-padding: 8 12 8 12;
+}
+.chat-bubble-ai {
+    -fx-background-color: #f3f4f6; /* Grigio chiarissimo */
+    -fx-text-fill: #1f2937;
+    -fx-background-radius: 15 15 15 0;
+    -fx-border-color: #d1d5db;
+    -fx-border-radius: 15 15 15 0;
+    -fx-padding: 8 12 8 12;
+}
+
+.report-header {
+    -fx-text-fill: #374151; /* Grigio scuro */
+    -fx-font-weight: bold;
+    -fx-font-size: 11px;
+}
+.chat-input {
+    -fx-background-radius: 15;
+    -fx-background-color: white;
+    -fx-border-color: #cbd5e1;
+    -fx-border-radius: 15;
+    -fx-text-fill: #333;
+}
+
+/* --- Guide & Glossary --- */
+.glossary-toolbar { -fx-background-color: #f4f6f8; -fx-border-color: #e0e0e0; -fx-border-width: 0 0 1 0; }
+.quick-filter-btn { -fx-background-color: #eef2f5; -fx-text-fill: #333; -fx-background-radius: 10; -fx-font-size: 10px; }
+.quick-filter-btn:hover { -fx-background-color: #e0e6eb; }
+.glossary-sidebar { -fx-background-color: #ffffff; -fx-border-color: #e0e0e0; -fx-border-width: 0 1 0 0; }
+.sidebar-header { -fx-text-fill: #888; -fx-font-size: 10px; -fx-font-weight: bold; -fx-padding: 5 10; }
+.glossary-list-view { -fx-background-color: transparent; }
+.glossary-list-view .list-cell { -fx-padding: 5 10; }
+.glossary-scroll-pane, .glossary-scroll-pane .viewport { -fx-background-color: transparent; }
+.glossary-accordion { -fx-background-color: transparent; }
+.glossary-disclaimer { -fx-text-fill: #777; -fx-font-size: 10px; -fx-padding: 5 10; -fx-alignment: CENTER; }
+.glossary-card { -fx-background-radius: 4; -fx-border-width: 0 0 0 3; }
+.card-def { -fx-background-color: #f0f8ff; -fx-border-color: #3a7ca5; }
+.card-tips { -fx-background-color: #f9fbe7; -fx-border-color: #827717; }
+.card-title { -fx-font-weight: bold; -fx-font-size: 11px; }
+.card-def .card-title { -fx-text-fill: #3a7ca5; }
+.card-tips .card-title { -fx-text-fill: #827717; }
+.card-text { -fx-fill: #555; }
+.tech-details-label { -fx-text-fill: #666; -fx-font-size: 10px; -fx-font-family: 'Monospaced'; }
+
+/* Widget Coach & Timeline */
+.widget-card { -fx-background-color: #ffffff; -fx-background-radius: 12; -fx-border-color: #e2e8f0; -fx-border-width: 1; -fx-border-radius: 12; -fx-effect: dropshadow(gaussian, rgba(0,0,0,0.1), 8, 0, 0, 2); }
+.widget-inner-box { -fx-background-color: #f8fafc; -fx-background-radius: 6; -fx-border-color: #e2e8f0; -fx-border-radius: 6; }
+.widget-title { -fx-text-fill: #1e293b; -fx-font-weight: 800; -fx-font-size: 14px; }
+.widget-value { -fx-text-fill: #334155; -fx-font-family: 'Monospaced'; -fx-font-weight: bold; }
+.widget-label { -fx-text-fill: #64748b; -fx-font-weight: bold; -fx-font-size: 10px; }
+.coach-tip-card { -fx-background-color: #f1f5f9; -fx-background-radius: 4; }
+.side-panel-title { -fx-font-weight: bold; -fx-font-size: 14px; -fx-text-fill: #005fb8; }
+.side-panel-text { -fx-text-fill: #333333; }
+/* --- FIX CHAT DEFINITIVO --- */
+
+/* Assicura che la lista non mostri scrollbar orizzontale */
+.chat-list-view {
+    -fx-background-color: transparent;
+    -fx-hbar-policy: never; /* Nasconde scrollbar orizzontale */
+}
+
+/* Bolla Utente */
+.chat-bubble-user {
+    -fx-background-color: #0078D7; /* Blu standard */
+    -fx-text-fill: white;          /* Testo BIANCO sempre leggibile */
+    -fx-background-radius: 15 15 0 15;
+    -fx-font-size: 13px;
+}
+
+/* Bolla AI */
+.chat-bubble-ai {
+    -fx-background-color: #333333; /* Grigio scuro (default) */
+    -fx-text-fill: #f0f0f0;        /* Testo CHIARO */
+    -fx-background-radius: 15 15 15 0;
+    -fx-border-color: #555555;
+    -fx-border-radius: 15 15 15 0;
+    -fx-font-size: 13px;
+}
+
+.root-light .chat-bubble-ai, .root .chat-bubble-ai {
+    -fx-background-color: #ffffff;
+    -fx-text-fill: #333333;
+    -fx-border-color: #cccccc;
+}
