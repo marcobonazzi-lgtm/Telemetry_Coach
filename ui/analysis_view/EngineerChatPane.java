@@ -2,6 +2,8 @@ package org.simulator.ui.analysis_view;
 
 import javafx.application.Platform;
 import javafx.beans.binding.Bindings;
+import javafx.collections.FXCollections;
+import javafx.collections.ObservableList;
 import javafx.geometry.Insets;
 import javafx.geometry.Orientation;
 import javafx.geometry.Pos;
@@ -24,28 +26,32 @@ import java.util.concurrent.CompletableFuture;
 
 public class EngineerChatPane {
 
-    // Struttura principale
-    private final SplitPane splitPane = new SplitPane();
+    // --- MODIFICA FONDAMENTALE: MEMORIA STATICA DELLA UI ---
+    // Questa lista sopravvive anche se EngineerChatPane viene ricreato
+    private static final ObservableList<ChatMessage> GLOBAL_HISTORY = FXCollections.observableArrayList();
 
-    // UI Componenti Report (Parte Superiore)
+    // Metodo per pulire la chat (chiamato solo quando carichi un NUOVO file CSV)
+    public static void clearGlobalChat() {
+        GLOBAL_HISTORY.clear();
+        GLOBAL_HISTORY.add(new ChatMessage("Ciao! 👋 Analisi telemetrica pronta. Seleziona un giro.", false));
+    }
+    // -------------------------------------------------------
+
+    private final SplitPane splitPane = new SplitPane();
     private final VBox reportContent = new VBox(8);
     private final ScrollPane reportScroll = new ScrollPane(reportContent);
     private final TitledPane mainReportPane;
-
-    // UI Componenti Chat (Parte Inferiore - AI)
     private final ListView<ChatMessage> chatList = new ListView<>();
     private final TextField chatInput = new TextField();
     private final Button sendButton = new Button("Invia");
     private final ProgressIndicator aiSpinner = new ProgressIndicator();
     private final TitledPane aiBetaPane;
 
-    // Dati e Stato
     private String currentTechnicalContext = "";
     private boolean isCoolingDown = false;
     private TrackInfo currentTrackInfo;
 
     public EngineerChatPane() {
-        // --- 1. SEZIONE REPORT ---
         reportScroll.setFitToWidth(true);
         reportScroll.setHbarPolicy(ScrollPane.ScrollBarPolicy.NEVER);
         reportScroll.getStyleClass().add("analysis-scroll-pane");
@@ -56,18 +62,19 @@ public class EngineerChatPane {
         mainReportPane.setMaxHeight(Double.MAX_VALUE);
         mainReportPane.setStyle("-fx-font-weight: bold; -fx-font-size: 14px;");
 
-        // --- 2. SEZIONE AI ---
         chatList.setCellFactory(lv -> new ChatCell());
         chatList.setPlaceholder(new Label("L'Assistente AI è online."));
         chatList.getStyleClass().add("chat-list-view");
-
-        // Disabilita policy orizzontale
         chatList.setStyle("-fx-hbar-policy: never;");
-
         HBox.setHgrow(chatList, Priority.ALWAYS);
 
-        // Messaggio Placeholder
-        chatList.getItems().add(new ChatMessage("Ciao! 👋 Analisi telemetrica pronta.", false));
+        // COLLEGA LA LISTA ALLA MEMORIA GLOBALE
+        chatList.setItems(GLOBAL_HISTORY);
+
+        // Se la lista è vuota (primo avvio assoluto), metti il benvenuto
+        if (GLOBAL_HISTORY.isEmpty()) {
+            GLOBAL_HISTORY.add(new ChatMessage("Ciao! 👋 Analisi telemetrica pronta.", false));
+        }
 
         aiSpinner.setMaxSize(16, 16);
         aiSpinner.setVisible(false);
@@ -93,10 +100,14 @@ public class EngineerChatPane {
         aiBetaPane.setMaxHeight(Double.MAX_VALUE);
         aiBetaPane.setStyle("-fx-font-size: 12px;");
 
-        // --- 3. ASSEMBLAGGIO ---
         splitPane.setOrientation(Orientation.VERTICAL);
         splitPane.getItems().addAll(mainReportPane, aiBetaPane);
         splitPane.setDividerPositions(0.65);
+
+        // Auto-scroll all'ultimo messaggio all'apertura
+        if (!GLOBAL_HISTORY.isEmpty()) {
+            Platform.runLater(() -> chatList.scrollTo(GLOBAL_HISTORY.size() - 1));
+        }
     }
 
     public Node getRoot() { return splitPane; }
@@ -105,22 +116,25 @@ public class EngineerChatPane {
         this.currentTrackInfo = t;
     }
 
+    // Metodo legacy, ora gestito dalla storia globale
     public void setContextMode(boolean isSingleLap) {
-        chatList.getItems().clear();
-        String welcomeMsg;
-        if (isSingleLap) {
-            welcomeMsg = "Ciao! 👋 Qui analizziamo il SINGOLO GIRO.\n\n" +
-                    "Chiedimi: \"Dove ho sbagliato in curva 1?\" o \"Com'erano le temperature in questo giro?\"";
-        } else {
-            welcomeMsg = "Ciao! 👋 Qui analizziamo il PASSO GARA e la COSTANZA.\n\n" +
-                    "Chiedimi: \"Come sto gestendo le gomme sulla lunga distanza?\" o \"Sono abbastanza costante?\"";
-        }
-        chatList.getItems().add(new ChatMessage(welcomeMsg, false));
+        // Non fare nulla per non resettare la chat
     }
 
     public void loadLap(Lap lap, List<Lap> session) {
-        showLoading();
+        showLoadingReportOnly(); // Pulisce il report, MA NON LA CHAT
+
         this.currentTechnicalContext = GeminiContextBuilder.buildLapContext(lap, currentTrackInfo);
+
+        // Aggiungi separatore solo se l'ultimo messaggio non è identico (per evitare spam se riclicchi lo stesso giro)
+        String separatorMsg = "--- 🏁 Analisi spostata sul Giro selezionato";
+        if (GLOBAL_HISTORY.isEmpty() || !GLOBAL_HISTORY.get(GLOBAL_HISTORY.size()-1).text.equals(separatorMsg)) {
+            Platform.runLater(() -> {
+                GLOBAL_HISTORY.add(new ChatMessage(separatorMsg, false));
+                chatList.scrollTo(GLOBAL_HISTORY.size() - 1);
+            });
+        }
+
         CompletableFuture.supplyAsync(() -> {
             var style = SetupAdvisor.analyzeStyle(session);
             var recs = SetupAdvisor.forLap(lap, style);
@@ -130,8 +144,18 @@ public class EngineerChatPane {
     }
 
     public void loadSession(List<Lap> laps) {
-        showLoading();
+        showLoadingReportOnly();
+
         this.currentTechnicalContext = GeminiContextBuilder.buildSessionContext(laps, currentTrackInfo);
+
+        String separatorMsg = "--- 📊 Analisi spostata sull'intera Sessione ---";
+        if (GLOBAL_HISTORY.isEmpty() || !GLOBAL_HISTORY.get(GLOBAL_HISTORY.size()-1).text.equals(separatorMsg)) {
+            Platform.runLater(() -> {
+                GLOBAL_HISTORY.add(new ChatMessage(separatorMsg, false));
+                chatList.scrollTo(GLOBAL_HISTORY.size() - 1);
+            });
+        }
+
         CompletableFuture.supplyAsync(() -> {
             var style = SetupAdvisor.analyzeStyle(laps);
             var recs = SetupAdvisor.forSession(laps, style);
@@ -140,7 +164,7 @@ public class EngineerChatPane {
         }).thenAcceptAsync(this::fillReportUI, Platform::runLater);
     }
 
-    private void showLoading() {
+    private void showLoadingReportOnly() {
         reportContent.getChildren().clear();
         Label l = new Label("Analisi telemetrica in corso...");
         l.setFont(Font.font("System", FontWeight.BOLD, 12));
@@ -149,7 +173,6 @@ public class EngineerChatPane {
 
     private void fillReportUI(AnalysisResult res) {
         reportContent.getChildren().clear();
-
         Label coachHeader = new Label("🏎️ NOTE DI GUIDA");
         coachHeader.setStyle("-fx-font-weight: bold; -fx-text-fill: #e24a4a; -fx-font-size: 13px;");
         reportContent.getChildren().add(coachHeader);
@@ -188,17 +211,14 @@ public class EngineerChatPane {
             case MEDIUM -> Color.ORANGE;
             case LOW -> Color.LIMEGREEN;
         };
-
         Circle dot = new Circle(4, c);
         Label lbl = new Label(text);
         lbl.setWrapText(true);
         lbl.setMaxWidth(600);
         lbl.setStyle("-fx-font-size: 13px;");
-
         HBox row = new HBox(12, dot, lbl);
         row.setAlignment(Pos.CENTER_LEFT);
         row.getStyleClass().add("advice-card");
-
         return row;
     }
 
@@ -206,9 +226,9 @@ public class EngineerChatPane {
         String text = chatInput.getText().trim();
         if (text.isEmpty() || isCoolingDown) return;
 
-        chatList.getItems().add(new ChatMessage(text, true));
+        GLOBAL_HISTORY.add(new ChatMessage(text, true));
         chatInput.clear();
-        chatList.scrollTo(chatList.getItems().size() - 1);
+        chatList.scrollTo(GLOBAL_HISTORY.size() - 1);
 
         isCoolingDown = true;
         chatInput.setDisable(true);
@@ -218,13 +238,13 @@ public class EngineerChatPane {
 
         CompletableFuture.supplyAsync(() -> GeminiService.chat(text, currentTechnicalContext))
                 .thenAcceptAsync(response -> {
-                    chatList.getItems().add(new ChatMessage(response, false));
-                    chatList.scrollTo(chatList.getItems().size() - 1);
+                    GLOBAL_HISTORY.add(new ChatMessage(response, false));
+                    chatList.scrollTo(GLOBAL_HISTORY.size() - 1);
                     aiSpinner.setVisible(false);
                 }, Platform::runLater);
 
         new Thread(() -> {
-            try { Thread.sleep(10000); } catch (InterruptedException ignored) {}
+            try { Thread.sleep(5000); } catch (InterruptedException ignored) {}
             Platform.runLater(() -> {
                 isCoolingDown = false;
                 chatInput.setDisable(false);
@@ -236,61 +256,33 @@ public class EngineerChatPane {
     }
 
     private record AnalysisResult(List<SetupAdvisor.Recommendation> recs, List<String> coachNotes) {}
+    // Nota: ChatMessage ora è usato da GLOBAL_HISTORY statico
     private record ChatMessage(String text, boolean isUser) {}
 
-    // --- CLASSE CHAT CELL (Versione CORRETTA: MaxWidth + FillWidth=False) ---
     private static class ChatCell extends ListCell<ChatMessage> {
         private final VBox box = new VBox();
         private final Label lbl = new Label();
 
         public ChatCell() {
-            // 1. QUESTO È FONDAMENTALE: Impedisce al VBox di stirare il contenuto.
-            // Se il testo è corto, il box resta corto.
             box.setFillWidth(false);
-
-            // 2. Configurazione Label
             lbl.setWrapText(true);
             lbl.setPadding(new Insets(10, 14, 10, 14));
-
             box.getChildren().add(lbl);
             setGraphic(box);
-
-            // Stile base (trasparente)
             setStyle("-fx-padding: 5; -fx-background-color: transparent;");
-
-            // Il contenitore esterno occupa tutta la larghezza per poter allineare DX/SX
             box.setMaxWidth(Double.MAX_VALUE);
-
-            // 3. BINDING CORRETTO:
-            // Usiamo maxWidthProperty (non prefWidth!).
-            // Questo dice: "NON superare il 75% della lista".
-            // Se il testo è più corto del 75%, grazie a fillWidth(false), resta piccolo.
             listViewProperty().addListener((obs, oldVal, currentListView) -> {
                 if (currentListView != null) {
-                    lbl.maxWidthProperty().bind(
-                            Bindings.min(
-                                    currentListView.widthProperty().multiply(0.75), // Limite dinamico
-                                    600.0                                           // Limite fisso massimo
-                            )
-                    );
+                    lbl.maxWidthProperty().bind(Bindings.min(currentListView.widthProperty().multiply(0.75), 600.0));
                 }
             });
         }
-
         @Override
         protected void updateItem(ChatMessage msg, boolean empty) {
             super.updateItem(msg, empty);
-
-            if (empty || msg == null) {
-                setGraphic(null);
-                return;
-            }
-
+            if (empty || msg == null) { setGraphic(null); return; }
             lbl.setText(msg.text);
-
-            // Reset stili (i colori sono gestiti dal CSS)
             lbl.getStyleClass().removeAll("chat-bubble-user", "chat-bubble-ai");
-
             if (msg.isUser) {
                 box.setAlignment(Pos.CENTER_RIGHT);
                 lbl.getStyleClass().add("chat-bubble-user");
@@ -298,7 +290,6 @@ public class EngineerChatPane {
                 box.setAlignment(Pos.CENTER_LEFT);
                 lbl.getStyleClass().add("chat-bubble-ai");
             }
-
             setGraphic(box);
         }
     }
