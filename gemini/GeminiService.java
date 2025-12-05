@@ -12,7 +12,7 @@ import java.util.List;
 public class GeminiService {
 
     // ⚠️ LA TUA CHIAVE API
-    private static final String API_KEY = "AIzaSyDZUVUAmQt5m0O73WZ1TcKBCiG3D7qYipQ";
+    private static final String API_KEY = "";
 
     private static final String ENDPOINT = "https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=" + API_KEY;
 
@@ -143,4 +143,5 @@ public class GeminiService {
                 .replace("\n", "\\n")
                 .replace("\r", "");
     }
+
 }
