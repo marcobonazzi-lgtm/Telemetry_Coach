@@ -18,32 +18,36 @@ import javafx.scene.text.FontWeight;
 import org.simulator.canale.Lap;
 import org.simulator.gemini.GeminiContextBuilder;
 import org.simulator.gemini.GeminiService;
+import org.simulator.gemini.GoogleTTSService;
 import org.simulator.setup.setup_advisor.SetupAdvisor;
 import org.simulator.tracks.TrackInfo;
 
 import java.util.List;
 import java.util.concurrent.CompletableFuture;
 
+/**
+ * Pannello di interazione con l'Ingegnere Virtuale (AI).
+ * Integra la visualizzazione del report, la chat testuale e il feedback vocale (TTS).
+ */
 public class EngineerChatPane {
 
-    // --- MODIFICA FONDAMENTALE: MEMORIA STATICA DELLA UI ---
-    // Questa lista sopravvive anche se EngineerChatPane viene ricreato
+    // Memoria statica per mantenere la cronologia tra i cambi di vista
     private static final ObservableList<ChatMessage> GLOBAL_HISTORY = FXCollections.observableArrayList();
 
-    // Metodo per pulire la chat (chiamato solo quando carichi un NUOVO file CSV)
     public static void clearGlobalChat() {
         GLOBAL_HISTORY.clear();
         GLOBAL_HISTORY.add(new ChatMessage("Ciao! 👋 Analisi telemetrica pronta. Seleziona un giro.", false));
     }
-    // -------------------------------------------------------
 
     private final SplitPane splitPane = new SplitPane();
     private final VBox reportContent = new VBox(8);
     private final ScrollPane reportScroll = new ScrollPane(reportContent);
     private final TitledPane mainReportPane;
+
     private final ListView<ChatMessage> chatList = new ListView<>();
     private final TextField chatInput = new TextField();
     private final Button sendButton = new Button("Invia");
+    private final ToggleButton audioButton = new ToggleButton("🔇"); // Pulsante Mute/Unmute
     private final ProgressIndicator aiSpinner = new ProgressIndicator();
     private final TitledPane aiBetaPane;
 
@@ -52,6 +56,7 @@ public class EngineerChatPane {
     private TrackInfo currentTrackInfo;
 
     public EngineerChatPane() {
+        // Setup Report View (Parte Superiore)
         reportScroll.setFitToWidth(true);
         reportScroll.setHbarPolicy(ScrollPane.ScrollBarPolicy.NEVER);
         reportScroll.getStyleClass().add("analysis-scroll-pane");
@@ -62,16 +67,14 @@ public class EngineerChatPane {
         mainReportPane.setMaxHeight(Double.MAX_VALUE);
         mainReportPane.setStyle("-fx-font-weight: bold; -fx-font-size: 14px;");
 
+        // Setup Chat View (Parte Inferiore)
         chatList.setCellFactory(lv -> new ChatCell());
         chatList.setPlaceholder(new Label("L'Assistente AI è online."));
         chatList.getStyleClass().add("chat-list-view");
         chatList.setStyle("-fx-hbar-policy: never;");
         HBox.setHgrow(chatList, Priority.ALWAYS);
-
-        // COLLEGA LA LISTA ALLA MEMORIA GLOBALE
         chatList.setItems(GLOBAL_HISTORY);
 
-        // Se la lista è vuota (primo avvio assoluto), metti il benvenuto
         if (GLOBAL_HISTORY.isEmpty()) {
             GLOBAL_HISTORY.add(new ChatMessage("Ciao! 👋 Analisi telemetrica pronta.", false));
         }
@@ -87,7 +90,9 @@ public class EngineerChatPane {
         sendButton.setOnAction(e -> sendMessage());
         chatInput.setOnKeyPressed(e -> { if (e.getCode() == KeyCode.ENTER) sendMessage(); });
 
-        HBox inputBox = new HBox(8, chatInput, sendButton, aiSpinner);
+        setupAudioButton();
+
+        HBox inputBox = new HBox(8, audioButton, chatInput, sendButton, aiSpinner);
         inputBox.setAlignment(Pos.CENTER_LEFT);
         inputBox.setPadding(new Insets(5, 0, 0, 0));
 
@@ -104,9 +109,33 @@ public class EngineerChatPane {
         splitPane.getItems().addAll(mainReportPane, aiBetaPane);
         splitPane.setDividerPositions(0.65);
 
-        // Auto-scroll all'ultimo messaggio all'apertura
         if (!GLOBAL_HISTORY.isEmpty()) {
             Platform.runLater(() -> chatList.scrollTo(GLOBAL_HISTORY.size() - 1));
+        }
+    }
+
+    private void setupAudioButton() {
+        audioButton.setPrefWidth(40);
+
+        // Sincronizza lo stato UI con il servizio statico
+        boolean isMuted = GoogleTTSService.isMuted();
+        audioButton.setSelected(!isMuted);
+        updateAudioIcon(!isMuted);
+
+        audioButton.setOnAction(e -> {
+            boolean audioOn = audioButton.isSelected();
+            GoogleTTSService.setMuted(!audioOn);
+            updateAudioIcon(audioOn);
+        });
+    }
+
+    private void updateAudioIcon(boolean audioOn) {
+        if (audioOn) {
+            audioButton.setText("🔊");
+            audioButton.setStyle("-fx-base: #4CAF50;"); // Verde attivo
+        } else {
+            audioButton.setText("🔇");
+            audioButton.setStyle(""); // Default
         }
     }
 
@@ -116,24 +145,19 @@ public class EngineerChatPane {
         this.currentTrackInfo = t;
     }
 
-    // Metodo legacy, ora gestito dalla storia globale
     public void setContextMode(boolean isSingleLap) {
-        // Non fare nulla per non resettare la chat
+        // Metodo mantenuto per compatibilità, non resetta la chat
     }
 
     public void loadLap(Lap lap, List<Lap> session) {
-        showLoadingReportOnly(); // Pulisce il report, MA NON LA CHAT
-
+        showLoadingReportOnly();
         this.currentTechnicalContext = GeminiContextBuilder.buildLapContext(lap, currentTrackInfo);
 
-        // Aggiungi separatore solo se l'ultimo messaggio non è identico (per evitare spam se riclicchi lo stesso giro)
+        // Ferma l'audio quando cambia il contesto
+        GoogleTTSService.stopSpeaking();
+
         String separatorMsg = "--- 🏁 Analisi spostata sul Giro selezionato";
-        if (GLOBAL_HISTORY.isEmpty() || !GLOBAL_HISTORY.get(GLOBAL_HISTORY.size()-1).text.equals(separatorMsg)) {
-            Platform.runLater(() -> {
-                GLOBAL_HISTORY.add(new ChatMessage(separatorMsg, false));
-                chatList.scrollTo(GLOBAL_HISTORY.size() - 1);
-            });
-        }
+        addSeparatorIfNeeded(separatorMsg);
 
         CompletableFuture.supplyAsync(() -> {
             var style = SetupAdvisor.analyzeStyle(session);
@@ -145,16 +169,12 @@ public class EngineerChatPane {
 
     public void loadSession(List<Lap> laps) {
         showLoadingReportOnly();
-
         this.currentTechnicalContext = GeminiContextBuilder.buildSessionContext(laps, currentTrackInfo);
 
+        GoogleTTSService.stopSpeaking();
+
         String separatorMsg = "--- 📊 Analisi spostata sull'intera Sessione ---";
-        if (GLOBAL_HISTORY.isEmpty() || !GLOBAL_HISTORY.get(GLOBAL_HISTORY.size()-1).text.equals(separatorMsg)) {
-            Platform.runLater(() -> {
-                GLOBAL_HISTORY.add(new ChatMessage(separatorMsg, false));
-                chatList.scrollTo(GLOBAL_HISTORY.size() - 1);
-            });
-        }
+        addSeparatorIfNeeded(separatorMsg);
 
         CompletableFuture.supplyAsync(() -> {
             var style = SetupAdvisor.analyzeStyle(laps);
@@ -162,6 +182,15 @@ public class EngineerChatPane {
             List<String> notes = org.simulator.coach.CoachSession.generateSessionNotes(laps);
             return new AnalysisResult(recs, notes);
         }).thenAcceptAsync(this::fillReportUI, Platform::runLater);
+    }
+
+    private void addSeparatorIfNeeded(String msg) {
+        if (GLOBAL_HISTORY.isEmpty() || !GLOBAL_HISTORY.get(GLOBAL_HISTORY.size()-1).text.equals(msg)) {
+            Platform.runLater(() -> {
+                GLOBAL_HISTORY.add(new ChatMessage(msg, false));
+                chatList.scrollTo(GLOBAL_HISTORY.size() - 1);
+            });
+        }
     }
 
     private void showLoadingReportOnly() {
@@ -226,6 +255,9 @@ public class EngineerChatPane {
         String text = chatInput.getText().trim();
         if (text.isEmpty() || isCoolingDown) return;
 
+        // Se l'utente interrompe, l'AI smette di parlare
+        GoogleTTSService.stopSpeaking();
+
         GLOBAL_HISTORY.add(new ChatMessage(text, true));
         chatInput.clear();
         chatList.scrollTo(GLOBAL_HISTORY.size() - 1);
@@ -241,8 +273,13 @@ public class EngineerChatPane {
                     GLOBAL_HISTORY.add(new ChatMessage(response, false));
                     chatList.scrollTo(GLOBAL_HISTORY.size() - 1);
                     aiSpinner.setVisible(false);
+
+                    // Attiva il TTS sulla risposta dell'AI
+                    GoogleTTSService.speak(response);
+
                 }, Platform::runLater);
 
+        // Cooldown timer per evitare spam API
         new Thread(() -> {
             try { Thread.sleep(5000); } catch (InterruptedException ignored) {}
             Platform.runLater(() -> {
@@ -256,7 +293,6 @@ public class EngineerChatPane {
     }
 
     private record AnalysisResult(List<SetupAdvisor.Recommendation> recs, List<String> coachNotes) {}
-    // Nota: ChatMessage ora è usato da GLOBAL_HISTORY statico
     private record ChatMessage(String text, boolean isUser) {}
 
     private static class ChatCell extends ListCell<ChatMessage> {
