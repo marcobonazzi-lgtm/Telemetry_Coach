@@ -5,6 +5,7 @@ import javafx.scene.Node;
 import javafx.scene.control.Label;
 import javafx.scene.control.TitledPane;
 import javafx.scene.layout.GridPane;
+import javafx.scene.layout.Region;
 import javafx.scene.layout.VBox;
 
 import java.util.*;
@@ -75,7 +76,6 @@ public final class UiWidgets {
             tp.setCollapsible(true);
             tp.setExpanded("Giro".equals(key));
             tp.setAnimated(false);
-            // Delegato interamente al CSS
             tp.getStyleClass().add("modern-titled-pane");
             root.getChildren().add(tp);
         }
@@ -161,6 +161,7 @@ public final class UiWidgets {
         root.getChildren().add(tp);
     }
 
+    // NUOVO: Aggiunta separatore e spaziature migliorate
     private static Node buildGroupGrid(List<Map.Entry<String, ? extends Number>> items) {
         List<Map.Entry<String, ? extends Number>> filtered = new ArrayList<>();
         for(var e : items) {
@@ -172,9 +173,13 @@ public final class UiWidgets {
         filtered.sort(ENTRY_COMPARATOR);
 
         GridPane gp = new GridPane();
-        gp.setHgap(8); gp.setVgap(4);
+        gp.setHgap(15);
+        gp.setVgap(8);
+        gp.setPadding(new Insets(5, 5, 5, 5));
+
         int r = 0;
-        for (var e : filtered) {
+        for (int i = 0; i < filtered.size(); i++) {
+            var e = filtered.get(i);
             Label keyLbl = new Label(e.getKey() + ":");
             keyLbl.getStyleClass().add("stat-key");
 
@@ -184,6 +189,14 @@ public final class UiWidgets {
             gp.add(keyLbl, 0, r);
             gp.add(valLbl, 1, r);
             r++;
+
+            // Inserisce una riga di divisione se non è l'ultimo elemento
+            if (i < filtered.size() - 1) {
+                Region divider = new Region();
+                divider.getStyleClass().add("stat-divider");
+                gp.add(divider, 0, r, 2, 1);
+                r++;
+            }
         }
         return gp;
     }
