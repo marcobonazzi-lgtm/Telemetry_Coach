@@ -232,3 +232,17 @@
     -fx-border-color: #cccccc;
 }
 */
+/* --- MODERN CARDS (Statistiche & Details) --- */
+.modern-card { -fx-background-color: #292524; -fx-border-color: #44403c; -fx-border-radius: 8; -fx-background-radius: 8; }
+.modern-card-header { -fx-font-weight: bold; -fx-font-size: 13px; -fx-text-fill: #a8a29e; -fx-padding: 10 15 10 15; -fx-background-color: #1c1917; -fx-background-radius: 8 8 0 0; -fx-border-color: transparent transparent #44403c transparent; -fx-border-width: 0 0 1 0; }
+
+/* Titoli Accordion con Sfondo e Separatori */
+.modern-titled-pane { -fx-text-fill: #e7e5e4; -fx-font-weight: bold; }
+.modern-titled-pane > .title { -fx-background-color: #1c1917; -fx-border-color: #44403c; -fx-border-radius: 4; -fx-background-radius: 4; -fx-padding: 6 10 6 10; }
+.modern-titled-pane > .title > .text { -fx-fill: #e7e5e4; }
+.modern-titled-pane > .content { -fx-background-color: transparent; -fx-border-color: transparent; -fx-padding: 8 5 8 10; }
+.stat-key { -fx-text-fill: #a8a29e; -fx-font-size: 12px; }
+.stat-val { -fx-text-fill: #f1f5f9; -fx-font-size: 12px; -fx-font-weight: bold; }
+
+/* NUOVO: Riga di divisione tra i dati */
+.stat-divider { -fx-background-color: #44403c; -fx-pref-height: 1px; -fx-min-height: 1px; }
