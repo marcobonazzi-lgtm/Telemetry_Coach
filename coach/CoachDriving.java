@@ -19,7 +19,9 @@ final class CoachDriving {
             // Recupero info extra anche su lap vuoti/parziali se possibile
             try {
                 for (String s : VehicleAdviceUtil.coachExtras(lap)) tmp.add(new Note(Priority.LOW, Category.GUIDA, s));
-            } catch(Throwable t){}
+            } catch(Throwable t){
+                System.out.println(t.getMessage());
+            }
             return tmp;
         }
 
@@ -41,19 +43,21 @@ final class CoachDriving {
 
         if (hasABS) {
             double absPct = fractionActive(lap, Channel.ABS_ACTIVE);
+        // ABS
             add(tmp, absPct > profAbsMuch(kind), Priority.HIGH, Category.GUIDA,
-                    "ABS attivo spesso (" + pctFmt(absPct) + "): entra più graduale e modula meglio.");
+                    "Saturazione longitudinale (ABS sempre attivo, " + pctFmt(absPct) + "): il picco di frenata va bene, ma devi modulare (rilasciare il freno) prima per non surriscaldare la gomma e per inserire l'auto.");
         }
 
         var apexes = LapAnalysis.apexes(lap, 5);
         double vMin = apexMinSpeed(lap, apexes);
+        // Apex lenti
         add(tmp, !Double.isNaN(vMin) && vMin < 50, Priority.MEDIUM, Category.GUIDA,
-                "Apex molto lenti (" + Math.round(vMin) + " km/h): anticipa leggermente l’apertura del gas.");
+                "Over-slowing a centro curva (Min speed: " + Math.round(vMin) + " km/h): stai sacrificando troppa scorrevolezza. Prova a portare più velocità (momentum) dentro la curva.");
 
-        // logica sovrasterzo (Core)
         if (suspectedOversteer(lap)){
+        // Sovrasterzo
             add(tmp, true, Priority.HIGH, Category.GUIDA,
-                    "Segnali di sovrasterzo (correzioni rapide): dosa il gas e raddrizza prima lo sterzo.");
+                    "Snap Oversteer rilevato: stai innescando instabilità al posteriore. Addolcisci il rilascio del freno o anticipa il raddrizzamento dello sterzo in uscita.");
         }
 
         // Analisi Coasting
@@ -63,9 +67,9 @@ final class CoachDriving {
             // Per le Formula/Hybrid, il coasting è spesso Fuel Saving tecnico, siamo più permissivi
             double limit = profCoastBad(kind);
             if (kind == VehicleKind.FORMULA_HYBRID || kind == VehicleKind.LMP) limit += 0.05;
-
+            // Coasting
             add(tmp, coasting > limit, Priority.MEDIUM, Category.GUIDA,
-                    "Coasting elevato (" + pctFmt(coasting) + "): anticipa gas o ritarda la frenata.");
+                    "Coasting eccessivo (" + pctFmt(coasting) + "): l'auto 'veleggia' senza input, sbilanciando la piattaforma aerodinamica. Unisci la fase di rilascio freno con l'apertura del gas.");
         }
 
         //Analisi Overlap (Gas + Freno insieme) - Tipico errore simracing / AC / LMU
@@ -74,35 +78,42 @@ final class CoachDriving {
                     val(s, Channel.THROTTLE) > 10.0 && val(s, Channel.BRAKE) > 5.0 && val(s, Channel.SPEED) > 50
             );
             // Tolleriamo un po' (brake warming o punta tacco manuale), ma non sopra il 3%
+            // Overlap (Gas+Freno)
             add(tmp, overlap > OVERLAP_LIMIT, Priority.HIGH, Category.GUIDA,
-                    "Sovrapposizione Gas/Freno eccessiva (" + pctFmt(overlap) + "): togli completamente il gas prima di frenare.");
+                    "Overlap Gas/Freno (Freni trascinati, " + pctFmt(overlap) + "): stai cuocendo i dischi e confondendo il differenziale. Separa nettamente le due fasi di guida.");
         }
 
         if (hasBrk && hasSte) {
             double trail = fraction(lap, s -> val(s, Channel.BRAKE) > BRK_TRAIL*100
                     && Math.abs(val(s, Channel.STEER_ANGLE)) > 10);
+            // Trail Braking basso
             add(tmp, trail < profTrailLow(kind),  Priority.MEDIUM, Category.GUIDA,
-                    "Poco trail-braking (" + pctFmt(trail) + "): rilascia il freno più graduale in ingresso.");
+                    "Assenza di Trail-Braking (" + pctFmt(trail) + "): rilasci il freno di scatto in ingresso. Mantieni una leggera pressione per tenere il peso sull'anteriore e facilitare la rotazione.");
+
+            // Trail Braking alto
             add(tmp, trail > profTrailHigh(kind), Priority.MEDIUM, Category.GUIDA,
-                    "Troppo freno in inserimento (" + pctFmt(trail) + "): rischio sottosterzo, rilascia prima.");
+                    "Eccesso di freno a centro curva (" + pctFmt(trail) + "): stai saturando la gomma anteriore (sottosterzo indotto). Fai respirare l'anteriore rilasciando il pedale verso l'apex.");
         }
 
         if (hasThr) {
             double oscPct = throttleOscillationPct(lap, profThrOscDps(kind));
+            // Gas irregolare
             add(tmp, oscPct > 0.10, Priority.MEDIUM, Category.GUIDA,
-                    "Gas irregolare (" + pctFmt(oscPct) + "): apri più progressivo in uscita.");
+                    "Input gas esitante/micro-correzioni (" + pctFmt(oscPct) + "): sbilanci il trasferimento di carico longitudinale al posteriore. Attendi il momento giusto e apri il gas in modo deciso e fluido.");
         }
 
         if (hasSte) {
             double harsh = steeringHarshPct(lap, profSteerRevRate(kind));
+            // Sterzo nervoso
             add(tmp, harsh > 0.10, Priority.MEDIUM, Category.GUIDA,
-                    "Sterzo nervoso (" + pctFmt(harsh) + "): pulisci gli input e la traiettoria.");
+                    "Over-driving sullo sterzo (" + pctFmt(harsh) + "): input troppo aggressivi inducono scivolamento (slip angle eccessivo) e surriscaldano la spalla della gomma. Sii più morbido e progressivo.");
         }
 
         if (hasTC) {
             double tcPct = fractionActive(lap, Channel.TC_ACTIVE);
+            // TC
             add(tmp, tcPct > profTcMuch(kind), Priority.MEDIUM, Category.GUIDA,
-                    "TC spesso attivo (" + pctFmt(tcPct) + "): dosa meglio il gas o rivedi livello TC.");
+                    "Taglio TC eccessivo (" + pctFmt(tcPct) + "): chiedi troppa potenza a ruote ancora sterzate. Raddrizza prima il volante, o rivedi le pressioni posteriori se manca grip meccanico.");
         }
 
         // --- FFB ---
@@ -113,8 +124,9 @@ final class CoachDriving {
                 double fn = (f > 1.5) ? (f/100.0) : f;
                 return fn >= FFB_CLIP;
             });
+            // FFB Clipping
             add(tmp, clip > FFB_BADPCT, Priority.MEDIUM, Category.FFB,
-                    "FFB in clipping (" + pctFmt(clip) + "): riduci il gain nel gioco/driver.");
+                    "Saturazione Force Feedback (Clipping " + pctFmt(clip) + "): stai perdendo dettagli vitali sul comportamento delle gomme. Abbassa il gain nel pannello del volante.");
         }
 
         // --- Trasmissione ---
