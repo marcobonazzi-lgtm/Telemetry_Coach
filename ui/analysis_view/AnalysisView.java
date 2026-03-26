@@ -36,9 +36,7 @@ public class AnalysisView {
 
     private final BorderPane root = new BorderPane();
     private final ScrollPane scroll = new ScrollPane();
-    private final VBox content = new VBox(12);
 
-    private final GridPane chartsGrid = new GridPane();
     private final VBox body = new VBox(12);
 
     private final MiniChartBox chartA = new MiniChartBox("Grafico A", ChartPane.PlotType.SPEED_DIST);
@@ -57,6 +55,7 @@ public class AnalysisView {
         this.data = data;
         this.charts = new ChartManager();
 
+        GridPane chartsGrid = new GridPane();
         chartsGrid.setHgap(10); chartsGrid.setVgap(10); chartsGrid.setPadding(new Insets(10));
         chartsGrid.add(chartA, 0, 0);
         chartsGrid.add(chartB, 1, 0);
@@ -73,6 +72,7 @@ public class AnalysisView {
         ColumnConstraints col = new ColumnConstraints(); col.setPercentWidth(50);
         chartsGrid.getColumnConstraints().setAll(col, col);
 
+        VBox content = new VBox(12);
         content.getChildren().setAll(chartsGrid, body);
         content.setFillWidth(true);
 
@@ -96,17 +96,17 @@ public class AnalysisView {
         root.setCenter(scroll);
 
         updateDebouncer = new PauseTransition(Duration.millis(150));
-        updateDebouncer.setOnFinished(e -> performRenderBodyAsync());
+        updateDebouncer.setOnFinished(ignored -> performRenderBodyAsync());
 
-        ui.wTyreTempProperty().addListener((o,ov,nv) -> triggerRenderBody());
-        ui.wBrakesProperty().addListener((o,ov,nv) -> triggerRenderBody());
-        ui.wTyrePressProperty().addListener((o,ov,nv) -> triggerRenderBody());
-        ui.wDamageProperty().addListener((o,ov,nv)    -> triggerRenderBody());
-        ui.wPedalsProperty().addListener((o,ov,nv)    -> triggerRenderBody());
+        ui.wTyreTempProperty().addListener((ignoredObs, ignoredOld, ignoredNew) -> triggerRenderBody());
+        ui.wBrakesProperty().addListener((ignoredObs, ignoredOld, ignoredNew) -> triggerRenderBody());
+        ui.wTyrePressProperty().addListener((ignoredObs, ignoredOld, ignoredNew) -> triggerRenderBody());
+        ui.wDamageProperty().addListener((ignoredObs, ignoredOld, ignoredNew)    -> triggerRenderBody());
+        ui.wPedalsProperty().addListener((ignoredObs, ignoredOld, ignoredNew)    -> triggerRenderBody());
 
-        chartA.selector.valueProperty().addListener((o, ov, nv) -> { renderCharts(); triggerRenderBody(); });
-        chartB.selector.valueProperty().addListener((o, ov, nv) -> { renderCharts(); triggerRenderBody(); });
-        chartC.selector.valueProperty().addListener((o, ov, nv) -> { renderCharts(); triggerRenderBody(); });
+        chartA.selector.valueProperty().addListener((ignoredObs, ignoredOld, ignoredNew) -> { renderCharts(); triggerRenderBody(); });
+        chartB.selector.valueProperty().addListener((ignoredObs, ignoredOld, ignoredNew) -> { renderCharts(); triggerRenderBody(); });
+        chartC.selector.valueProperty().addListener((ignoredObs, ignoredOld, ignoredNew) -> { renderCharts(); triggerRenderBody(); });
     }
 
     public Node getRoot() { return root; }
@@ -138,7 +138,7 @@ public class AnalysisView {
     private void renderCharts() {
         if (refLap == null) {
             List<Lap> laps = data.getLaps();
-            if (laps != null && !laps.isEmpty()) refLap = laps.get(0);
+            if (laps != null && !laps.isEmpty()) refLap = laps.getFirst();
         }
         if (refLap == null) {
             chartA.chart.getData().clear();
@@ -180,7 +180,8 @@ public class AnalysisView {
         }).thenAcceptAsync(stats -> {
             if (refLap != targetLap) return;
 
-            TitledPane statsPane = titled("Statistiche (giro)", UiWidgets.buildStatsAccordion(stats));
+            // Cambiato il tipo da TitledPane a Node per la flessibilità della nuova UI
+            Node statsPane = titled("📊 Statistiche (giro)", UiWidgets.buildStatsAccordion(stats));
 
             ComboBox<String> widgetSelector = new ComboBox<>();
             List<String> items = new ArrayList<>();
@@ -193,9 +194,10 @@ public class AnalysisView {
             if (items.isEmpty()) items.add("Pneumatici (T)");
             widgetSelector.getItems().setAll(items);
             widgetSelector.getSelectionModel().selectFirst();
+            widgetSelector.setStyle("-fx-background-radius: 4; -fx-border-radius: 4; -fx-padding: 2;");
 
             StackPane widgetHolder = new StackPane();
-            widgetHolder.setPadding(new Insets(6));
+            widgetHolder.setPadding(new Insets(6, 0, 0, 0));
             double WIDGET_HEIGHT = 350.0;
             widgetHolder.setMinHeight(WIDGET_HEIGHT);
             widgetHolder.setPrefHeight(WIDGET_HEIGHT);
@@ -210,13 +212,14 @@ public class AnalysisView {
                 widgetHolder.getChildren().setAll(n);
             };
             updateWidget.run();
-            widgetSelector.valueProperty().addListener((o, ov, nv) -> updateWidget.run());
+            widgetSelector.valueProperty().addListener((ignoredObs, ignoredOld, ignoredNew) -> updateWidget.run());
 
-            TitledPane widgetPane = titled("Dettagli (seleziona widget)", new VBox(6, widgetSelector, widgetHolder));
+            // Cambiato il tipo da TitledPane a Node
+            Node widgetPane = titled("⚙️ Dettagli (seleziona widget)", new VBox(8, widgetSelector, widgetHolder));
 
             GridPane row = new GridPane();
             row.setAlignment(Pos.TOP_LEFT);
-            row.setHgap(12); row.setVgap(12);
+            row.setHgap(15); row.setVgap(15);
             row.setPadding(new Insets(8));
             ColumnConstraints left = new ColumnConstraints();  left.setPercentWidth(50);
             ColumnConstraints right= new ColumnConstraints();  right.setPercentWidth(50);
@@ -239,7 +242,7 @@ public class AnalysisView {
                         engineerUI.setTrackInfo(trackInfo);
                     }
                 }
-            } catch (Exception e) { }
+            } catch (Exception ignored) { }
             // --------------------
 
             engineerUI.loadLap(targetLap, data.getLaps());
@@ -254,10 +257,21 @@ public class AnalysisView {
         }, Platform::runLater);
     }
 
-    private static TitledPane titled(String title, Node content) {
-        TitledPane tp = new TitledPane(title, content);
-        tp.setCollapsible(false);
-        return tp;
+    // --- METODO MODERNIZZATO ---
+    private static Node titled(String title, Node content) {
+        VBox card = new VBox();
+        card.setStyle("-fx-background-color: white; -fx-border-color: #e5e7eb; -fx-border-radius: 8; -fx-background-radius: 8;");
+
+        Label header = new Label(title.toUpperCase(Locale.ROOT));
+        header.setStyle("-fx-font-weight: bold; -fx-font-size: 13px; -fx-text-fill: #4b5563; -fx-padding: 10 15 10 15; -fx-background-color: #f9fafb; -fx-background-radius: 8 8 0 0; -fx-border-color: transparent transparent #e5e7eb transparent; -fx-border-width: 0 0 1 0;");
+        header.setMaxWidth(Double.MAX_VALUE);
+
+        VBox contentContainer = new VBox(content);
+        contentContainer.setPadding(new Insets(12));
+        VBox.setVgrow(contentContainer, Priority.ALWAYS);
+
+        card.getChildren().addAll(header, contentContainer);
+        return card;
     }
 
     private Node selectWidgetContent(String name, Lap lap){
