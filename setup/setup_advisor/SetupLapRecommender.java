@@ -37,10 +37,10 @@ final class SetupLapRecommender {
             if (!Double.isNaN(avgPsi)) {
                 if (avgPsi < targets.psiMin()) {
                     out.add(new SetupAdvisor.Recommendation(SetupAdvisor.Severity.HIGH, "Pressioni",
-                            String.format(Locale.ITALIAN, "Pressioni globalmente basse (avg %.1f): target %.1f–%.1f psi.", avgPsi, targets.psiMin(), targets.psiMax())));
+                            String.format(Locale.ITALIAN, "Pressione a caldo sotto la finestra operativa (avg %.1f psi). Stai perdendo supporto strutturale sulla carcassa. Alza le pressioni a freddo per centrare il target %.1f–%.1f psi.", avgPsi, targets.psiMin(), targets.psiMax())));
                 } else if (avgPsi > targets.psiMax()) {
                     out.add(new SetupAdvisor.Recommendation(SetupAdvisor.Severity.HIGH, "Pressioni",
-                            String.format(Locale.ITALIAN, "Pressioni globalmente alte (avg %.1f): target %.1f–%.1f psi.", avgPsi, targets.psiMin(), targets.psiMax())));
+                            String.format(Locale.ITALIAN, "Pressione a caldo eccessiva (avg %.1f psi). L'impronta a terra (contact patch) è ridotta. Abbassa le pressioni a freddo (target %.1f–%.1f psi).", avgPsi, targets.psiMin(), targets.psiMax())));
                 }
             }
         }
@@ -53,10 +53,10 @@ final class SetupLapRecommender {
             if (SetupMetrics.isF(frontCap)) {
                 if (frontCap > 4.0) {
                     out.add(new SetupAdvisor.Recommendation(SetupAdvisor.Severity.HIGH, "Pressioni",
-                            "Profilo ‘a cappello’ anteriore (centro caldo): abbassa le pressioni di −0.1/−0.2 psi."));
+                            "Gradiente termico a 'cappello' sull'anteriore (centro surriscaldato). Abbassa le pressioni di −0.1/−0.2 psi per spalmare il carico su tutto il battistrada."));
                 } else if ((dAvgEdgesF - dMidF) > 4.0) {
                     out.add(new SetupAdvisor.Recommendation(SetupAdvisor.Severity.HIGH, "Pressioni",
-                            "Profilo ‘a U’ anteriore (spalle calde): aumenta le pressioni di +0.1/+0.2 psi."));
+                            "Gradiente termico a 'U' sull'anteriore (spalle sovraccaricate). La carcassa flette eccessivamente al centro. Aumenta le pressioni di +0.1/+0.2 psi per stabilizzarla."));
                 }
             }
             double dMidR = (edges.midRL + edges.midRR) / 2.0;
@@ -65,10 +65,10 @@ final class SetupLapRecommender {
             if (SetupMetrics.isF(rearCap)) {
                 if (rearCap > 4.0) {
                     out.add(new SetupAdvisor.Recommendation(SetupAdvisor.Severity.MEDIUM, "Pressioni",
-                            "Profilo ‘a cappello’ posteriore: −0.1 psi per restare nel target."));
+                            "Gradiente a 'cappello' al posteriore: riduci di −0.1 psi per massimizzare la trazione longitudinale."));
                 } else if ((dAvgEdgesR - dMidR) > 4.0) {
                     out.add(new SetupAdvisor.Recommendation(SetupAdvisor.Severity.MEDIUM, "Pressioni",
-                            "Profilo ‘a U’ posteriore: +0.1 psi per ridurre flessione carcassa."));
+                            "Gradiente a 'U' al posteriore: aumenta di +0.1 psi per supportare le pareti laterali."));
                 }
             }
         } catch (Throwable ignore) {}
@@ -80,10 +80,10 @@ final class SetupLapRecommender {
             if (SetupMetrics.isF(inMidF) && SetupMetrics.isF(outMidF)) {
                 if (inMidF - outMidF > 7.0) {
                     out.add(new SetupAdvisor.Recommendation(SetupAdvisor.Severity.HIGH, "Geometria",
-                            "Anteriore Inner molto caldo: Camber forse eccessivo, riduci di ~0.2°."));
+                            "Anteriore Inner in overheating termico: il Camber statico negativo è eccessivo per le curve di questo tracciato. Riduci l'angolo di ~0.2°."));
                 } else if (outMidF - inMidF > 5.0) {
                     out.add(new SetupAdvisor.Recommendation(SetupAdvisor.Severity.HIGH, "Geometria",
-                            "Anteriore Outer molto caldo: Camber insufficiente, aumenta di ~0.2°."));
+                            "Anteriore Outer surriscaldato: l'esterno spalla lavora troppo in appoggio. Manca Camber negativo, aumentalo di ~0.2° per resistere al rollio."));
                 }
             }
             double inMidR = edges.rearInMid();
@@ -91,7 +91,7 @@ final class SetupLapRecommender {
             if (SetupMetrics.isF(inMidR) && SetupMetrics.isF(outMidR)) {
                 if (inMidR - outMidR > 5.0) {
                     out.add(new SetupAdvisor.Recommendation(SetupAdvisor.Severity.MEDIUM, "Geometria",
-                            "Posteriore Inner caldo: riduci camber posteriore di ~0.1°."));
+                            "Posteriore Inner troppo caldo: perdi grip vitale in trazione a ruote dritte. Riduci il camber posteriore di ~0.1°."));
                 }
             }
         } catch (Throwable ignore) {}
@@ -102,7 +102,7 @@ final class SetupLapRecommender {
             if (SetupMetrics.isF(leftBias) && Math.abs(leftBias) > 5.0) {
                 String lato = leftBias > 0 ? "sinistra" : "destra";
                 out.add(new SetupAdvisor.Recommendation(SetupAdvisor.Severity.LOW, "Geometria",
-                        "Differenza termica L/R anteriore: verifica consumo anomalo a " + lato + " (possibile Toe eccessivo su quel lato)."));
+                        "Asimmetria termica L/R anteriore (" + lato + " più critica). Se il circuito è sbilanciato è normale, altrimenti verifica di non aver settato valori di Toe asimmetrici."));
             }
         } catch (Throwable ignore) {}
 
@@ -111,12 +111,12 @@ final class SetupLapRecommender {
             double rUtil = susp.rear();
             if (SetupMetrics.isF(rUtil) && rUtil > 0.94) {
                 out.add(new SetupAdvisor.Recommendation(SetupAdvisor.Severity.HIGH, "Sospensioni",
-                        "Posteriore a pacco (travel >94%): irrigidisci molle/bumpstop o alza il rake (+1-2mm)."));
+                        "Sospensione posteriore a pacco (travel >94%). Stai toccando i bumpstop in compressione, innescando snap oversteer imprevedibili. Irrigidisci il wheel rate (molle) o alza il posteriore (+1-2mm)."));
             }
             double fUtil = susp.front();
             if (SetupMetrics.isF(fUtil) && fUtil > 0.94) {
                 out.add(new SetupAdvisor.Recommendation(SetupAdvisor.Severity.MEDIUM, "Sospensioni",
-                        "Anteriore a pacco: rischio bottoming. Alza ride height o indurisci molle."));
+                        "Fondocorsa anteriore rilevato sotto carico (Bumpstop attivi). Rischio di bloccaggi in staccata. Indurisci le molle anteriori o alza la ride height."));
             }
         } catch (Throwable ignore) {}
 
@@ -125,10 +125,10 @@ final class SetupLapRecommender {
         if (!Double.isNaN(tyreAvg)) {
             if (tyreAvg < targets.tempCoreMin()) {
                 out.add(new SetupAdvisor.Recommendation(SetupAdvisor.Severity.MEDIUM, "Gomme",
-                        String.format(Locale.ITALIAN, "Gomme fredde (avg %.0f°C): chiudi ducts o alza pressione.", tyreAvg)));
+                        String.format(Locale.ITALIAN, "Gomme fredde sotto la working window (avg %.0f°C): la mescola non garantisce adesione meccanica. Chiudi i brake ducts o alza le pressioni (psi).", tyreAvg)));
             } else if (tyreAvg > targets.tempCoreMax()) {
                 out.add(new SetupAdvisor.Recommendation(SetupAdvisor.Severity.MEDIUM, "Gomme",
-                        String.format(Locale.ITALIAN, "Gomme calde (avg %.0f°C): apri ducts o abbassa pressione.", tyreAvg)));
+                        String.format(Locale.ITALIAN, "Gomme calde oltre il picco di grip (avg %.0f°C): surriscaldamento chimico. Apri i brake ducts o abbassa le pressioni (psi).", tyreAvg)));
             }
         }
 
@@ -137,10 +137,10 @@ final class SetupLapRecommender {
         if (!Double.isNaN(brakes)) {
             if (brakes < targets.tempBrakeMin()) {
                 out.add(new SetupAdvisor.Recommendation(SetupAdvisor.Severity.LOW, "Freni",
-                        String.format(Locale.ITALIAN, "Freni freddi (%.0f°C): chiudi brake ducts.", brakes)));
+                        String.format(Locale.ITALIAN, "Freni freddi (%.0f°C): materiale d'attrito fuori range. Rischio vetrificazione (glazing). Chiudi i brake ducts.", brakes)));
             } else if (brakes > targets.tempBrakeMax()) {
                 out.add(new SetupAdvisor.Recommendation(SetupAdvisor.Severity.HIGH, "Freni",
-                        String.format(Locale.ITALIAN, "Freni surriscaldati (%.0f°C): apri ducts o gestisci la staccata.", brakes)));
+                        String.format(Locale.ITALIAN, "Freni surriscaldati (%.0f°C): stai superando la soglia di ossidazione. Rischio fade critico sul pedale. Apri i brake ducts o sposta il brake bias.", brakes)));
             }
         }
 
@@ -148,54 +148,54 @@ final class SetupLapRecommender {
         double[] srFR = CoachCore.slipRatioFrontRearPct(lap);
         double[] saFR = CoachCore.slipAngleFrontRearPct(lap);
 
-        boolean rearSlipDom = (srFR != null && saFR != null) && ((srFR[1] > srFR[0]*1.2) || (saFR[1] > saFR[0]*1.2)) || over;
-        boolean frontSlipDom = (srFR != null && saFR != null) && ((srFR[0] > srFR[1]*1.2) || (saFR[0] > saFR[1]*1.2));
+        boolean rearSlipDom = srFR[1] > srFR[0] * 1.2 || saFR[1] > saFR[0] * 1.2 || over;
+        boolean frontSlipDom = srFR[0] > srFR[1] * 1.2 || saFR[0] > saFR[1] * 1.2;
 
         if (rearSlipDom) {
             if (traits.drivetrain == VehicleTraits.Drivetrain.FWD) {
                 out.add(new SetupAdvisor.Recommendation(SetupAdvisor.Severity.MEDIUM, "Barre",
-                        "FWD Sovrasterzante: ammorbidisci la barra posteriore o riduci il rake."));
+                        "Lift-off oversteer eccessivo (FWD): il posteriore è troppo libero. Ammorbidisci la barra antirollio (ARB) posteriore o riduci il rake idrodinamico."));
             } else {
                 out.add(new SetupAdvisor.Recommendation(SetupAdvisor.Severity.HIGH, "Differenziale",
-                        "Sovrasterzo in uscita: +1 Power, +1 Preload (o +1 TC)."));
+                        "Trazione posteriore critica (Power Oversteer): il retrotreno pattina in uscita. Chiudi il differenziale in trazione (+1 Power) o aumenta il Preload. In alternativa valuta di ridurre la mappa del TC."));
                 out.add(new SetupAdvisor.Recommendation(SetupAdvisor.Severity.MEDIUM, "Ammortizzatori",
-                        "Riduci Rebound posteriore per trazione; ammorbidisci Bump posteriore se nervoso."));
+                        "Instabilità longitudinale posteriore: riduci ammortizzatori in Slow Rebound posteriore per massimizzare l'impronta a terra in accelerazione, e ammorbidisci il Bump se saltelli sui cordoli."));
             }
         } else if (frontSlipDom) {
             out.add(new SetupAdvisor.Recommendation(SetupAdvisor.Severity.MEDIUM, "Barre",
-                    "Sottosterzo: ammorbidisci barra ant. o indurisci post."));
+                    "Saturazione asse anteriore (Sottosterzo cronico): il muso scivola. Ammorbidisci la barra antirollio (ARB) anteriore o indurisci la posteriore per forzare la rotazione."));
             if (traits.drivetrain == VehicleTraits.Drivetrain.FWD) {
                 out.add(new SetupAdvisor.Recommendation(SetupAdvisor.Severity.HIGH, "Differenziale",
-                        "FWD Sottosterzo: aumenta il bloccaggio diff (Power) per trascinare il muso dentro."));
+                        "Sottosterzo in uscita (FWD): il differenziale aperto disperde la coppia sulla ruota interna scarica. Aumenta il bloccaggio in tiro (Power) per far chiudere la curva al muso."));
             }
             out.add(new SetupAdvisor.Recommendation(SetupAdvisor.Severity.LOW, "Geometria",
-                    "Aumenta Camber anteriore (-0.1°) per grip laterale."));
+                    "Aumenta leggermente il Camber anteriore (-0.1°) per incrementare il limite di aderenza laterale a centro curva."));
         }
 
         // ===== Downshift / Engine Brake =====
         if (badDown >= 3) {
             out.add(new SetupAdvisor.Recommendation(SetupAdvisor.Severity.MEDIUM, "Trasmissione",
-                    "Downshift aggressivi (RPM alti): aumenta Coast (+1) o riduci Engine Brake per non bloccare il ponte."));
+                    "Engine braking invasivo: downshift aggressivi stanno causando bloccaggio o saltellamento del ponte posteriore. Aumenta il livello di Coast (+1) nel differenziale o riduci il freno motore via elettronica."));
         }
 
         // ===== Ride Height (Kerb Strikes) =====
         double rhFL = CoachCore.firstNonNaN(lap, Channel.RIDE_HEIGHT_FL);
         if (!Double.isNaN(rhFL) && rhFL < CoachCore.RIDE_LOW_WARN) {
             out.add(new SetupAdvisor.Recommendation(SetupAdvisor.Severity.MEDIUM, "Sospensioni/Ride",
-                    "Ride height anteriore critico: rischio danni/bottoming. Alza di 1-2 mm."));
+                    "Ride height anteriore critico: l'aero-plank sfiora il suolo. Altissimo rischio di stallo aerodinamico e bottoming violento. Alza la vettura di 1-2 mm."));
         }
 
         // ===== Aids (TC/ABS) =====
         double absAct = CoachCore.fractionActive(lap, Channel.ABS_ACTIVE);
         if (absAct > 0.25) {
             out.add(new SetupAdvisor.Recommendation(SetupAdvisor.Severity.LOW, "ABS",
-                    "ABS molto attivo: prova ad aumentare il livello ABS o ridurre la pressione freno."));
+                    "Intervento ABS cronico: l'algoritmo di salvataggio taglia pressione frenante per troppa frazione di curva. Prova a ridurre il livello ABS per avere un feeling più analogico sul pedale."));
         }
 
         // ===== Stile Guida =====
         if (style == SetupAdvisor.DriverStyle.AGGRESSIVE && rearSlipDom) {
             out.add(new SetupAdvisor.Recommendation(SetupAdvisor.Severity.LOW, "Mappature",
-                    "Guida aggressiva: usa una mappa acceleratore più lineare/progressiva per gestire la trazione."));
+                    "Throttle mapping non compatibile col tuo stile aggressivo: usa una curva del gas più piatta/lineare (Throttle Map) per dosare la coppia motrice in uscita."));
         }
 
         return out;
