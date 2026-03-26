@@ -154,3 +154,17 @@
     -fx-text-fill: #333333;
     -fx-border-color: #cccccc;
 }
+/* --- MODERN CARDS (Statistiche & Details) --- */
+.modern-card { -fx-background-color: #ffffff; -fx-border-color: #e5e7eb; -fx-border-radius: 8; -fx-background-radius: 8; }
+.modern-card-header { -fx-font-weight: bold; -fx-font-size: 13px; -fx-text-fill: #4b5563; -fx-padding: 10 15 10 15; -fx-background-color: #f9fafb; -fx-background-radius: 8 8 0 0; -fx-border-color: transparent transparent #e5e7eb transparent; -fx-border-width: 0 0 1 0; }
+
+/* Titoli Accordion con Sfondo e Separatori */
+.modern-titled-pane { -fx-text-fill: #374151; -fx-font-weight: bold; }
+.modern-titled-pane > .title { -fx-background-color: #f3f4f6; -fx-border-color: #e5e7eb; -fx-border-radius: 4; -fx-background-radius: 4; -fx-padding: 6 10 6 10; }
+.modern-titled-pane > .title > .text { -fx-fill: #374151; }
+.modern-titled-pane > .content { -fx-background-color: transparent; -fx-border-color: transparent; -fx-padding: 8 5 8 10; }
+.stat-key { -fx-text-fill: #6b7280; -fx-font-size: 12px; }
+.stat-val { -fx-text-fill: #111827; -fx-font-size: 12px; -fx-font-weight: bold; }
+
+/* NUOVO: Riga di divisione tra i dati */
+.stat-divider { -fx-background-color: #e5e7eb; -fx-pref-height: 1px; -fx-min-height: 1px; }
