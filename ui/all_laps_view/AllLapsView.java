@@ -16,7 +16,6 @@ import org.simulator.ui.DataController;
 import org.simulator.ui.analysis_view.EngineerChatPane;
 import org.simulator.ui.settings.UiSettings;
 import org.simulator.widget.*;
-import org.simulator.ui.*;
 import org.simulator.ui.asix_pack.AxisChoice;
 import org.simulator.ui.asix_pack.AxisPicker;
 import org.simulator.ui.ChartManager;
@@ -31,7 +30,6 @@ public class AllLapsView {
     private final ChartManager charts;
 
     private final StackPane rootStack = new StackPane();
-    private final VBox contentBox = new VBox();
     private final GridPane grid = new GridPane();
     private final Label xAxisLabel = new Label("Asse X: (n/d)");
 
@@ -45,7 +43,6 @@ public class AllLapsView {
     private final StackPane lapsViewport = new StackPane();
     private static final double CELL_MIN_W = 420;
     private static final double GAP = 12;
-    private final UiSettings ui = UiSettings.get();
     private int currentCols = -1;
 
     private final VBox loadingOverlay;
@@ -72,10 +69,10 @@ public class AllLapsView {
 
         lapsViewport.getChildren().addAll(lapsScroll, btnLeft, btnRight);
         lapsViewport.setMinHeight(340);
-        btnLeft.setOnAction(e -> pageBy(-1));
-        btnRight.setOnAction(e -> pageBy(+1));
+        btnLeft.setOnAction(ignored -> pageBy(-1));
+        btnRight.setOnAction(ignored -> pageBy(+1));
 
-        lapsScroll.viewportBoundsProperty().addListener((o, ov, nv) -> {
+        lapsScroll.viewportBoundsProperty().addListener((ignoredObs, ov, nv) -> {
             if (nv.getWidth() != ov.getWidth()) sizeCardsToViewport();
         });
 
@@ -89,7 +86,7 @@ public class AllLapsView {
                 ChartPane.PlotType.SEAT_FORCE
         );
         plotSelector.getSelectionModel().select(currentType);
-        plotSelector.valueProperty().addListener((o, ov, nv) -> {
+        plotSelector.valueProperty().addListener((ignoredObs, ignoredOld, nv) -> {
             if (nv != null) {
                 currentType = nv;
                 render();
@@ -97,25 +94,27 @@ public class AllLapsView {
         });
 
         Node top = buildTop();
+        VBox contentBox = new VBox();
         contentBox.getChildren().addAll(top, grid);
         VBox.setVgrow(grid, Priority.ALWAYS);
 
         loadingOverlay = new VBox(15, new ProgressIndicator(), new Label("Analisi sessione completa..."));
         loadingOverlay.setMaxSize(Double.MAX_VALUE, Double.MAX_VALUE);
         loadingOverlay.setFillWidth(true);
-        ((Label) loadingOverlay.getChildren().get(1)).setStyle("-fx-text-fill: white; -fx-font-size: 14px; -fx-font-weight: bold;");
-        ((ProgressIndicator) loadingOverlay.getChildren().get(0)).setStyle("-fx-progress-color: #0096c9;");
+        loadingOverlay.getChildren().get(1).setStyle("-fx-text-fill: white; -fx-font-size: 14px; -fx-font-weight: bold;");
+        loadingOverlay.getChildren().get(0).setStyle("-fx-progress-color: #0096c9;");
         loadingOverlay.setAlignment(Pos.CENTER);
         loadingOverlay.setVisible(false);
         loadingOverlay.setStyle("-fx-background-color: rgba(20, 24, 30, 0.85); -fx-background-radius: 0;");
 
         rootStack.getChildren().addAll(contentBox, loadingOverlay);
 
-        ui.wTyreTempProperty().addListener((o,ov,nv) -> render());
-        ui.wBrakesProperty().addListener((o,ov,nv) -> render());
-        ui.wTyrePressProperty().addListener((o,ov,nv) -> render());
-        ui.wDamageProperty().addListener((o,ov,nv)    -> render());
-        ui.wPedalsProperty().addListener((o,ov,nv)    -> render());
+        UiSettings ui = UiSettings.get();
+        ui.wTyreTempProperty().addListener((ignoredObs, ignoredOld, ignoredNew) -> render());
+        ui.wBrakesProperty().addListener((ignoredObs, ignoredOld, ignoredNew) -> render());
+        ui.wTyrePressProperty().addListener((ignoredObs, ignoredOld, ignoredNew) -> render());
+        ui.wDamageProperty().addListener((ignoredObs, ignoredOld, ignoredNew)    -> render());
+        ui.wPedalsProperty().addListener((ignoredObs, ignoredOld, ignoredNew)    -> render());
     }
 
     public Node getRoot() { return rootStack; }
@@ -143,7 +142,7 @@ public class AllLapsView {
             return;
         }
 
-        AxisChoice axis = AxisPicker.pick(laps.get(0));
+        AxisChoice axis = AxisPicker.pick(laps.getFirst());
         xAxisLabel.setText("Asse X: " + axis.label + "  •  Grafici: " + currentType);
 
         List<VBox> placeholders = preparePlaceholders(laps);
@@ -159,13 +158,13 @@ public class AllLapsView {
                 VBox sessionBox = buildSessionSection(laps);
                 grid.add(sessionBox, 0, 1);
                 GridPane.setHgrow(sessionBox, Priority.ALWAYS);
-            } catch (Exception e) {}
+            } catch (Exception ignored) {}
         });
     }
 
     private List<VBox> preparePlaceholders(List<Lap> laps) {
         List<VBox> boxes = new ArrayList<>(laps.size());
-        for (Lap lap : laps) {
+        for (int i = 0; i < laps.size(); i++) {
             VBox card = new VBox();
             card.setAlignment(Pos.CENTER);
             card.setPadding(new Insets(0));
@@ -205,25 +204,30 @@ public class AllLapsView {
         Platform.runLater(() -> renderLapAsync(endIndex, laps, axis, token, containers));
     }
 
+    private double calculateCardWidth(double viewportW) {
+        int targetCols = Math.max(1, Math.min(5, (int)Math.floor((viewportW + GAP) / (CELL_MIN_W + GAP))));
+        return (viewportW - (targetCols - 1) * GAP) / targetCols;
+    }
+
     private void sizeCardsToViewport() {
         double viewportW = lapsScroll.getViewportBounds() == null ? 0 : lapsScroll.getViewportBounds().getWidth();
         if (viewportW <= 0 || lapsRow.getChildren().isEmpty()) return;
-        int targetCols = Math.max(1, Math.min(5, (int)Math.floor((viewportW + GAP) / (CELL_MIN_W + GAP))));
-        double cardW = (viewportW - (targetCols - 1) * GAP) / targetCols;
-        for (Node n : lapsRow.getChildren()) { if (n instanceof VBox v) refreshCardSize(v, cardW); }
+
+        double cardW = calculateCardWidth(viewportW);
+        for (Node n : lapsRow.getChildren()) {
+            if (n instanceof VBox v) refreshCardSize(v, cardW);
+        }
     }
 
     private void refreshCardSize(VBox v) {
         double viewportW = lapsScroll.getViewportBounds() == null ? 0 : lapsScroll.getViewportBounds().getWidth();
         if (viewportW <= 0) return;
-        int targetCols = Math.max(1, Math.min(5, (int)Math.floor((viewportW + GAP) / (CELL_MIN_W + GAP))));
-        double cardW = (viewportW - (targetCols - 1) * GAP) / targetCols;
-        refreshCardSize(v, cardW);
+        refreshCardSize(v, calculateCardWidth(viewportW));
     }
 
     private void refreshCardSize(VBox v, double width) {
         v.setPrefWidth(width);
-        if (!v.getChildren().isEmpty() && v.getChildren().get(0) instanceof Region r) r.setPrefWidth(width);
+        if (!v.getChildren().isEmpty() && v.getChildren().getFirst() instanceof Region r) r.setPrefWidth(width);
     }
 
     private void updateArrowsVisibility() {
@@ -255,7 +259,7 @@ public class AllLapsView {
         Node bestNode = null;
         if (best != null) {
             var bestStats = LapAnalysis.basicStats(best);
-            String bestTitle = "Statistiche (miglior giro: #" + best.index + (Double.isNaN(best.lapTime) ? "" : ", " + TimeUtil.formatLapTime(best.lapTime)) + ")";
+            String bestTitle = "🏆 Statistiche (Miglior giro: #" + best.index + (Double.isNaN(best.lapTime) ? "" : ", " + TimeUtil.formatLapTime(best.lapTime)) + ")";
             bestNode = titled(bestTitle, UiWidgets.buildStatsAccordion(bestStats));
         }
 
@@ -266,9 +270,10 @@ public class AllLapsView {
         merged.putAll(forceStats);
 
         Node avgAccordion = UiWidgets.buildStatsAccordion(merged);
-        TitledPane mediaPane = titled("Statistiche (media sessione)", new VBox(8, avgAccordion));
+        // Cambiato da TitledPane a Node per la flessibilità UI
+        Node mediaPane = titled("⏱️ Statistiche (Media sessione)", new VBox(8, avgAccordion));
 
-        HBox statsRow = new HBox(12);
+        HBox statsRow = new HBox(15);
         statsRow.setFillHeight(true);
         if (bestNode != null) statsRow.getChildren().add(bestNode);
         statsRow.getChildren().add(mediaPane);
@@ -288,7 +293,7 @@ public class AllLapsView {
                     engineerUI.setTrackInfo(trackInfo);
                 }
             }
-        } catch (Exception e) { }
+        } catch (Exception ignored) { }
         // --------------------
 
         engineerUI.loadSession(laps);
@@ -304,13 +309,24 @@ public class AllLapsView {
     private static Lap bestLapOf(List<Lap> laps) {
         if (laps == null || laps.isEmpty()) return null;
         Optional<Lap> bestByTime = laps.stream().filter(l -> l.isComplete(laps)).min(Comparator.comparingDouble(l -> l.lapTime));
-        return bestByTime.orElse(laps.stream().max(Comparator.comparingInt(l -> l.samples == null ? 0 : l.samples.size())).orElse(laps.get(0)));
+        return bestByTime.orElse(laps.stream().max(Comparator.comparingInt(l -> l.samples == null ? 0 : l.samples.size())).orElse(laps.getFirst()));
     }
 
-    private static TitledPane titled(String title, Node content) {
-        TitledPane tp = new TitledPane(title, content);
-        tp.setCollapsible(false);
-        return tp;
+    // --- METODO MODERNIZZATO ---
+    private static Node titled(String title, Node content) {
+        VBox card = new VBox();
+        card.setStyle("-fx-background-color: white; -fx-border-color: #e5e7eb; -fx-border-radius: 8; -fx-background-radius: 8;");
+
+        Label header = new Label(title.toUpperCase(Locale.ROOT));
+        header.setStyle("-fx-font-weight: bold; -fx-font-size: 13px; -fx-text-fill: #4b5563; -fx-padding: 10 15 10 15; -fx-background-color: #f9fafb; -fx-background-radius: 8 8 0 0; -fx-border-color: transparent transparent #e5e7eb transparent; -fx-border-width: 0 0 1 0;");
+        header.setMaxWidth(Double.MAX_VALUE);
+
+        VBox contentContainer = new VBox(content);
+        contentContainer.setPadding(new Insets(12));
+        VBox.setVgrow(contentContainer, Priority.ALWAYS);
+
+        card.getChildren().addAll(header, contentContainer);
+        return card;
     }
 
     private static String yLabelFor(ChartPane.PlotType t) {
@@ -321,7 +337,6 @@ public class AllLapsView {
             case RPM_TIME -> "RPM";
             case FFB_FORCE -> "FFB";
             case PEDAL_FORCE, SEAT_FORCE -> "Force (N)";
-            default -> "Y";
         };
     }
 
@@ -338,7 +353,7 @@ public class AllLapsView {
         if (ui.wDamageProperty().get())    activeWidgets.add(DamageWidget.buildFromLaps(laps));
         if (ui.wPedalsProperty().get())    activeWidgets.add(PedalWidget.buildFromLaps(laps));
 
-        g.widthProperty().addListener((obs, oldVal, newVal) -> {
+        g.widthProperty().addListener((ignoredObs, ignoredOld, newVal) -> {
             double width = newVal.doubleValue();
             if (width <= 0) return;
             int targetCols = (width > 1600) ? 3 : 2;
