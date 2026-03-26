@@ -312,13 +312,12 @@ public class AllLapsView {
         return bestByTime.orElse(laps.stream().max(Comparator.comparingInt(l -> l.samples == null ? 0 : l.samples.size())).orElse(laps.getFirst()));
     }
 
-    // --- METODO MODERNIZZATO ---
     private static Node titled(String title, Node content) {
         VBox card = new VBox();
-        card.setStyle("-fx-background-color: white; -fx-border-color: #e5e7eb; -fx-border-radius: 8; -fx-background-radius: 8;");
+        card.getStyleClass().add("modern-card");
 
         Label header = new Label(title.toUpperCase(Locale.ROOT));
-        header.setStyle("-fx-font-weight: bold; -fx-font-size: 13px; -fx-text-fill: #4b5563; -fx-padding: 10 15 10 15; -fx-background-color: #f9fafb; -fx-background-radius: 8 8 0 0; -fx-border-color: transparent transparent #e5e7eb transparent; -fx-border-width: 0 0 1 0;");
+        header.getStyleClass().add("modern-card-header");
         header.setMaxWidth(Double.MAX_VALUE);
 
         VBox contentContainer = new VBox(content);
