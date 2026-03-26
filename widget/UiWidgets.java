@@ -3,22 +3,16 @@ package org.simulator.widget;
 import javafx.geometry.Insets;
 import javafx.scene.Node;
 import javafx.scene.control.Label;
-import javafx.scene.control.ListCell;
-import javafx.scene.control.ListView;
 import javafx.scene.control.TitledPane;
 import javafx.scene.layout.GridPane;
-import javafx.scene.layout.HBox;
-import javafx.scene.layout.Priority;
 import javafx.scene.layout.VBox;
-import javafx.scene.paint.Color;
-import javafx.scene.shape.Circle;
-import javafx.util.Callback;
 
 import java.util.*;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-/** * Utility UI riutilizzabili per statistiche e note.
+/**
+ * Utility UI riutilizzabili per statistiche e note.
  * Versione Ottimizzata: Comparator statico, Factory per ListCell e logica consolidata.
  */
 public final class UiWidgets {
@@ -34,7 +28,7 @@ public final class UiWidgets {
         return Double.isNaN(d) || Double.isInfinite(d) || Math.abs(d) <= EPS;
     }
 
-    private static boolean shouldHideEntry(String key, Number n) {
+    private static boolean shouldHideEntry(Number n) {
         return isMissingOrZero(n);
     }
 
@@ -46,6 +40,7 @@ public final class UiWidgets {
         if (ca != cb) return Integer.compare(ca, cb);
         return a.getKey().compareToIgnoreCase(b.getKey());
     };
+
     // -------------------- STATISTICHE: accordion con sottosezioni --------------------
 
     public static Node buildStatsAccordion(Map<String, ? extends Number> stats) {
@@ -59,39 +54,32 @@ public final class UiWidgets {
 
         Map<String, List<Map.Entry<String, ? extends Number>>> groups = new LinkedHashMap<>();
         for (String g : groupOrder) groups.put(g, new ArrayList<>());
+
         // Smistamento
         for (var e : stats.entrySet()) {
             // Pruning preventivo: se il valore è inutile, non lo processiamo nemmeno
-            if (shouldHideEntry(e.getKey(), e.getValue())) continue;
+            if (shouldHideEntry(e.getValue())) continue;
 
             String group = groupNameForKey(e.getKey());
             groups.getOrDefault(group, groups.get("Altro")).add(e);
         }
 
-        VBox root = new VBox(8);
+        VBox root = new VBox(5); // Ridotto spacing per un look più coeso
         root.setPadding(new Insets(2, 0, 0, 0));
 
         for (var g : groups.entrySet()) {
             List<Map.Entry<String, ? extends Number>> items = g.getValue();
             if (items.isEmpty()) continue;
 
-            Node content;
             String key = g.getKey();
 
-            switch (key) {
-                case "Gomme":
-                    content = buildTyresSubAccordion(items);
-                    break;
-                case "Assetto & Dinamica":
-                    content = buildSetupDynamicsSlim(items);
-                    break;
-                case "Altro":
-                    content = buildOtherSubAccordion(items);
-                    break;
-                default:
-                    content = buildGroupGrid(items);
-                    break;
-            }
+            // Switch statement modernizzato
+            Node content = switch (key) {
+                case "Gomme" -> buildTyresSubAccordion(items);
+                case "Assetto & Dinamica" -> buildSetupDynamicsSlim(items);
+                case "Altro" -> buildOtherSubAccordion(items);
+                default -> buildGroupGrid(items);
+            };
 
             if (isEmptyNode(content)) continue;
 
@@ -99,6 +87,8 @@ public final class UiWidgets {
             tp.setCollapsible(true);
             tp.setExpanded("Giro".equals(key)); // Default open
             tp.setAnimated(false); // Performance boost
+            // --- STILE PIATTO MODERNO PER GLI ACCORDION INTERNI ---
+            tp.setStyle("-fx-font-weight: bold; -fx-text-fill: #374151; -fx-box-border: transparent; -fx-background-color: transparent;");
             root.getChildren().add(tp);
         }
         return root;
@@ -166,7 +156,7 @@ public final class UiWidgets {
         for (var e : entries) {
             String subKey = selector.select(e);
             if (subKey != null) {
-                subs.computeIfAbsent(subKey, k -> new ArrayList<>()).add(e);
+                subs.computeIfAbsent(subKey, ignored -> new ArrayList<>()).add(e);
             }
         }
 
@@ -183,6 +173,8 @@ public final class UiWidgets {
         tp.setCollapsible(true);
         tp.setExpanded(false);
         tp.setAnimated(false);
+        // --- STILE PIATTO MODERNO ---
+        tp.setStyle("-fx-font-weight: bold; -fx-text-fill: #4b5563; -fx-box-border: transparent; -fx-background-color: transparent;");
         root.getChildren().add(tp);
     }
 
@@ -192,7 +184,7 @@ public final class UiWidgets {
         // Filtro finale di sicurezza (anche se già fatto a monte)
         List<Map.Entry<String, ? extends Number>> filtered = new ArrayList<>();
         for(var e : items) {
-            if(!shouldHideEntry(e.getKey(), e.getValue())) filtered.add(e);
+            if(!shouldHideEntry(e.getValue())) filtered.add(e);
         }
 
         if (filtered.isEmpty()) return new VBox(0); // Return empty node instead of empty grid
@@ -205,9 +197,12 @@ public final class UiWidgets {
         for (var e : filtered) {
             Label keyLbl = new Label(e.getKey() + ":");
             keyLbl.getStyleClass().add("stat-key");
+            // Se manca il CSS esterno diamo un fallback pulito
+            keyLbl.setStyle("-fx-text-fill: #6b7280; -fx-font-size: 12px;");
 
             Label valLbl = new Label(formatValueForKey(e.getKey(), e.getValue()));
             valLbl.getStyleClass().add("stat-val"); // Utile per CSS esterno
+            valLbl.setStyle("-fx-text-fill: #111827; -fx-font-size: 12px; -fx-font-weight: bold;");
 
             gp.add(keyLbl, 0, r);
             gp.add(valLbl, 1, r);
@@ -245,11 +240,11 @@ public final class UiWidgets {
         String kl = key.toLowerCase(Locale.ROOT);
         if (kl.contains("lap") && kl.contains("time")) return formatLapTime(d);
         if (kl.contains("rpm") || P_CLOCK.matcher(kl).find()) return String.format(Locale.getDefault(), "%.0f", d);
-        if (P_DEG.matcher(kl).find()) return formatByMagnitude(d, 1, 1, 2);
+        if (P_DEG.matcher(kl).find()) return formatByMagnitude(d, 1);
         if (P_PERCENT.matcher(kl).find() || P_PRESSURE.matcher(kl).find() || P_TEMP.matcher(kl).find())
             return String.format(Locale.getDefault(), "%.1f", d);
         if (P_SPEED.matcher(kl).find() || P_TORQUE.matcher(kl).find() || P_ENERGY.matcher(kl).find())
-            return formatByMagnitude(d, 0, 1, 2);
+            return formatByMagnitude(d, 0);
 
         double ad = Math.abs(d);
         if (ad >= 10000) return String.format(Locale.getDefault(), "%.0f", d);
@@ -257,11 +252,11 @@ public final class UiWidgets {
         return String.format(Locale.getDefault(), "%.2f", d);
     }
 
-    private static String formatByMagnitude(double d, int bigDigits, int midDigits, int smallDigits) {
+    private static String formatByMagnitude(double d, int bigDigits) {
         double ad = Math.abs(d);
-        if (ad >= 100)   return String.format(Locale.getDefault(), "%." + bigDigits + "f", d);
-        if (ad >= 10)    return String.format(Locale.getDefault(), "%." + midDigits + "f", d);
-        return String.format(Locale.getDefault(), "%." + smallDigits + "f", d);
+        if (ad >= 100)   return String.format(Locale.getDefault(), bigDigits == 0 ? "%.0f" : "%.1f", d);
+        if (ad >= 10)    return String.format(Locale.getDefault(), "%.1f", d);
+        return String.format(Locale.getDefault(), "%.2f", d);
     }
 
     // Corner ordering: FL(0), FR(1), RL(2), RR(3), altri(9)
@@ -270,11 +265,13 @@ public final class UiWidgets {
         Matcher m = P_CORNER.matcher(key.toUpperCase(Locale.ROOT));
         if (!m.find()) return 9;
         String g = m.group(1);
-        if (g.equals("FL")) return 0;
-        if (g.equals("FR")) return 1;
-        if (g.equals("RL")) return 2;
-        if (g.equals("RR")) return 3;
-        return 9;
+        return switch (g) {
+            case "FL" -> 0;
+            case "FR" -> 1;
+            case "RL" -> 2;
+            case "RR" -> 3;
+            default -> 9;
+        };
     }
 
     private static String groupNameForKey(String kRaw) {
