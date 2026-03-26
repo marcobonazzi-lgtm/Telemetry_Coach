@@ -41,7 +41,6 @@ final class SetupSessionRecommender {
 
         // 1. Fuel & Assetto
         try {
-            // Risolto: getFirst() e rimosso controllo != null ridondante
             SetupMetrics.FuelStats fuel = SetupMetrics.fuelStats(laps.getFirst());
             if (SetupMetrics.isF(fuel.level)) {
                 double heavyFuelL = switch (vt.category) {
@@ -59,7 +58,6 @@ final class SetupSessionRecommender {
 
         // 2. Ducts freno (Dinamico)
         try {
-            // Risolto: getLast() e rimosso controllo != null ridondante
             SetupMetrics.BrakeStats br = SetupMetrics.brakeStats(laps.getLast());
             double avgBrake = 0.0; int nB=0;
             for (double v : new double[]{br.avgFL, br.avgFR, br.avgRL, br.avgRR}) { if (SetupMetrics.isF(v)){ avgBrake+=v; nB++; } }
@@ -201,8 +199,6 @@ final class SetupSessionRecommender {
         double drsAvailAvg, drsUsedAvg;
         double limiterFrac;
         double gripAvg, windAvg;
-
-        // Nuovi campi per risolvere i warning
         double tcAvg, absAvg;
         double ersRecAvg, ersDepAvg;
         double boostAvg;
@@ -245,8 +241,6 @@ final class SetupSessionRecommender {
             double rr = CoachCore.meanChannel(l, Channel.RIDE_HEIGHT_RL);
             if (!Double.isNaN(rf)) { sumRideF += rf; nRide++; }
             if (!Double.isNaN(rr)) { sumRideR += rr; }
-
-            // Risolto: rimosso controllo != null ridondante su srFR
             double[] srFR = CoachCore.slipRatioFrontRearPct(l);
             if (srFR[1] > srFR[0] * SLIP_REAR_DOM_FACTOR) rearDomHits++;
             if (srFR[0] > srFR[1] * SLIP_REAR_DOM_FACTOR) frontDomHits++;
@@ -312,8 +306,6 @@ final class SetupSessionRecommender {
         a.limiterFrac = (nLim > 0) ? sumLim / nLim : 0.0;
         a.gripAvg = (nEnv > 0) ? sumGrip / nEnv : Double.NaN;
         a.windAvg = (nEnv > 0) ? sumWind / nEnv : Double.NaN;
-
-        // Medie Nuove Metriche
         a.tcAvg = (nElettronica > 0) ? sumTc / nElettronica : 0.0;
         a.absAvg = (nElettronica > 0) ? sumAbs / nElettronica : 0.0;
         a.ersRecAvg = (nErs > 0) ? sumErsRec / nErs : 0.0;
