@@ -3,7 +3,6 @@ package org.simulator.coach;
 import org.simulator.canale.Channel;
 import org.simulator.canale.Lap;
 import org.simulator.canale.Sample;
-import org.simulator.setup.setup_advisor.VehicleTraits;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -31,12 +30,12 @@ final class CoachPerformance {
 
                 if (br.trailFrac < low && br.peak > 0.7) {
                     out.add(new CoachCore.Note(Priority.HIGH, Category.FRENI,
-                            "Rilascio freno troppo brusco: allunga il trail-braking per aiutare la rotazione."));
+                            "Rilascio freno brusco: l'avantreno si solleva troppo in fretta perdendo carico aero e grip direzionale. Allunga la fase di trail-braking."));
                 } else if (br.trailFrac > high) {
                     // NEW: Se è una Formula o un prototipo LMU, tolleriamo di più il freno pizzicato per l'aero
                     if (kind != VehicleKind.FORMULA && kind != VehicleKind.LMP && kind != VehicleKind.FORMULA_HYBRID) {
                         out.add(new CoachCore.Note(Priority.MEDIUM, Category.FRENI,
-                                "Mantieni leggermente freno oltre l’apex: rilascia prima per non trascinare velocità."));
+                                "Freno trascinato oltre l'apex: stai bloccando la rotazione naturale del telaio e rallentando l'uscita. Lascia scorrere l'auto."));
                     }
                 }
             }
@@ -45,11 +44,11 @@ final class CoachPerformance {
             SteerFeat st = steeringFeatures(lap);
             if (!Double.isNaN(st.revPerMin) && st.revPerMin > profSteerRevRate(kind)){
                 out.add(new CoachCore.Note(Priority.MEDIUM, Category.GUIDA,
-                        "Troppe correzioni di sterzo: pulisci la linea e ruota l’auto prima dell’apex."));
+                        "Eccessive correzioni di sterzo a centro curva: l'auto non è appoggiata correttamente. Pulisci la linea e anticipa la rotazione col freno (steering with the pedals)."));
             }
 
             // 3) Apex speed / min speed vs laterale
-            double minSpeed = minChannel(lap, Channel.SPEED);
+            double minSpeed = minChannel(lap);
             // Fallback per LMU se ACC_LAT manca ma c'è CG_ACCEL...
             double latGpeak = maxChannel(lap, Channel.ACC_LAT);
             if (Double.isNaN(latGpeak)) latGpeak = maxChannel(lap, Channel.CG_ACCEL_LATERAL);
@@ -58,7 +57,7 @@ final class CoachPerformance {
                 // Se vado piano E non carico le gomme lateralmente -> sono troppo cauto
                 if (minSpeed < 50 && latGpeak < profLatGMin(kind) * 0.8) {
                     out.add(new CoachCore.Note(Priority.MEDIUM, Category.GUIDA,
-                            "Velocità minima bassa senza alto carico laterale: prova ad entrare con più velocità."));
+                            "Sotto-utilizzo del grip laterale: stai entrando piano e non stai sfruttando tutto il potenziale laterale della gomma (LatG basso). Ritarda la staccata o frena più dolcemente."));
                 }
             }
 
@@ -66,7 +65,7 @@ final class CoachPerformance {
             SlipFeat sl = slipFeatures(lap);
             if (!Double.isNaN(sl.rearSlip) && sl.rearSlip > 0.18) {
                 out.add(new CoachCore.Note(Priority.HIGH, Category.TRASM,
-                        "Uscita in pattinamento: dosa il gas progressivo e ritarda leggermente il 100%."));
+                        "Pattinamento longitudinale prolungato (Wheelspin): stai convertendo l'energia in calore sulle gomme posteriori anziché in propulsione in avanti. Modula il pedale."));
             }
 
             // 5) Throttle discipline
@@ -80,7 +79,7 @@ final class CoachPerformance {
             ShiftFeat sh = shiftFeatures(lap);
             if (!Double.isNaN(sh.overRevPct) && sh.overRevPct > 0.12){
                 out.add(new CoachCore.Note(Priority.LOW, Category.TRASM,
-                        "Over-rev in cambiata: anticipa leggermente lo shift."));
+                        "Cambiata in Over-rev: stai andando oltre il picco di potenza del motore (Power Band) e stressando la trasmissione. Usa i LED per anticipare lo shift."));
             }
 
         } catch (Throwable ignore){}
@@ -92,10 +91,9 @@ final class CoachPerformance {
         if (session == null || session.isEmpty()) return Collections.emptyList();
         List<CoachCore.Note> out = new ArrayList<>();
         try {
-            CoachCore.VehicleKind kind = detectVehicleKind(session);
 
             // Consistenza
-            double[] laps = session.stream().mapToDouble(Lap::lapTimeSafe).filter(v -> v>0 && !Double.isNaN(v)).toArray();
+            double[] laps = session.stream().mapToDouble(Lap::lapTimeSafe).filter(v -> v>0).toArray();
             if (laps.length >= 3){
                 double mean = 0; for (double v: laps) mean += v; mean/=laps.length;
                 double var = 0; for (double v: laps) var += (v-mean)*(v-mean); var/=laps.length;
@@ -184,7 +182,7 @@ final class CoachPerformance {
     }
 
     static ShiftFeat shiftFeatures(Lap lap){
-        double pct = 0.0; int n=0; int over=0;
+        double pct; int n=0; int over=0;
         if (lap!=null && lap.samples!=null){
             double rpmMax = maxChannel(lap, Channel.ENGINE_RPM);
             for (Sample s: lap.samples){
@@ -204,7 +202,7 @@ final class CoachPerformance {
     static double get(Sample s, Channel ch){
         if (s==null || s.values()==null) return Double.NaN;
         Double v = s.values().get(ch);
-        return (v==null || v.isNaN() || v.isInfinite()) ? Double.NaN : v.doubleValue();
+        return (v==null || v.isNaN() || v.isInfinite()) ? Double.NaN : v;
     }
     static double maxChannel(Lap lap, Channel ch){
         double m = Double.NaN;
@@ -215,11 +213,11 @@ final class CoachPerformance {
         }
         return m;
     }
-    static double minChannel(Lap lap, Channel ch){
+    static double minChannel(Lap lap){
         double m = Double.NaN;
         if (lap==null || lap.samples==null) return m;
         for (Sample s: lap.samples){
-            double v = get(s,ch);
+            double v = get(s, Channel.SPEED);
             if (!Double.isNaN(v)) m = Double.isNaN(m) ? v : Math.min(m, v);
         }
         return m;
