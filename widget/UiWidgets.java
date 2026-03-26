@@ -13,13 +13,11 @@ import java.util.regex.Pattern;
 
 /**
  * Utility UI riutilizzabili per statistiche e note.
- * Versione Ottimizzata: Comparator statico, Factory per ListCell e logica consolidata.
  */
 public final class UiWidgets {
 
     private UiWidgets() {}
 
-    // -------------------- PARAMETRI PRUNING --------------------
     private static final double EPS = 1e-9;
 
     private static boolean isMissingOrZero(Number n) {
@@ -32,8 +30,6 @@ public final class UiWidgets {
         return isMissingOrZero(n);
     }
 
-    // -------------------- COMPARATOR (Ottimizzazione) --------------------
-    // Istanziamo il comparatore una volta sola per evitare garbage collection inutile
     private static final Comparator<Map.Entry<String, ? extends Number>> ENTRY_COMPARATOR = (a, b) -> {
         int ca = cornerRank(a.getKey());
         int cb = cornerRank(b.getKey());
@@ -41,10 +37,7 @@ public final class UiWidgets {
         return a.getKey().compareToIgnoreCase(b.getKey());
     };
 
-    // -------------------- STATISTICHE: accordion con sottosezioni --------------------
-
     public static Node buildStatsAccordion(Map<String, ? extends Number> stats) {
-        // Ordine gruppi principali
         List<String> groupOrder = List.of(
                 "Giro", "Motore", "Ibrido (ERS/KERS/DRS)", "Fuel",
                 "Sospensioni", "Assetto & Dinamica", "Gomme", "Freni",
@@ -55,16 +48,13 @@ public final class UiWidgets {
         Map<String, List<Map.Entry<String, ? extends Number>>> groups = new LinkedHashMap<>();
         for (String g : groupOrder) groups.put(g, new ArrayList<>());
 
-        // Smistamento
         for (var e : stats.entrySet()) {
-            // Pruning preventivo: se il valore è inutile, non lo processiamo nemmeno
             if (shouldHideEntry(e.getValue())) continue;
-
             String group = groupNameForKey(e.getKey());
             groups.getOrDefault(group, groups.get("Altro")).add(e);
         }
 
-        VBox root = new VBox(5); // Ridotto spacing per un look più coeso
+        VBox root = new VBox(5);
         root.setPadding(new Insets(2, 0, 0, 0));
 
         for (var g : groups.entrySet()) {
@@ -72,8 +62,6 @@ public final class UiWidgets {
             if (items.isEmpty()) continue;
 
             String key = g.getKey();
-
-            // Switch statement modernizzato
             Node content = switch (key) {
                 case "Gomme" -> buildTyresSubAccordion(items);
                 case "Assetto & Dinamica" -> buildSetupDynamicsSlim(items);
@@ -85,10 +73,10 @@ public final class UiWidgets {
 
             TitledPane tp = new TitledPane(key, content);
             tp.setCollapsible(true);
-            tp.setExpanded("Giro".equals(key)); // Default open
-            tp.setAnimated(false); // Performance boost
-            // --- STILE PIATTO MODERNO PER GLI ACCORDION INTERNI ---
-            tp.setStyle("-fx-font-weight: bold; -fx-text-fill: #374151; -fx-box-border: transparent; -fx-background-color: transparent;");
+            tp.setExpanded("Giro".equals(key));
+            tp.setAnimated(false);
+            // Delegato interamente al CSS
+            tp.getStyleClass().add("modern-titled-pane");
             root.getChildren().add(tp);
         }
         return root;
@@ -100,8 +88,6 @@ public final class UiWidgets {
         return false;
     }
 
-    // ---- Sottosezioni Specializzate ----
-
     private static Node buildTyresSubAccordion(List<Map.Entry<String, ? extends Number>> entries) {
         return buildSubGroups(entries, e -> {
             String k = e.getKey().toLowerCase(Locale.ROOT);
@@ -110,12 +96,11 @@ public final class UiWidgets {
             if (k.contains("load")) return "Carichi";
             if (k.contains("grip") || k.contains("slip") || k.contains("dirt") || k.contains("wear")) return "Grip/Slip";
             if (k.contains("wheel angular") || k.contains("radius")) return "Ruote";
-            return null; // Scartato o categoria default
+            return null;
         });
     }
 
     private static Node buildSetupDynamicsSlim(List<Map.Entry<String, ? extends Number>> entries) {
-        // Qui gestiamo manualmente perché alcuni elementi vanno nel "root" del gruppo
         List<Map.Entry<String, ? extends Number>> geometries = new ArrayList<>();
         List<Map.Entry<String, ? extends Number>> accels = new ArrayList<>();
         List<Map.Entry<String, ? extends Number>> others = new ArrayList<>();
@@ -147,7 +132,6 @@ public final class UiWidgets {
         });
     }
 
-    // Helper generico per creare sottogruppi
     private interface GroupSelector { String select(Map.Entry<String, ? extends Number> e); }
 
     private static Node buildSubGroups(List<Map.Entry<String, ? extends Number>> entries, GroupSelector selector) {
@@ -173,21 +157,17 @@ public final class UiWidgets {
         tp.setCollapsible(true);
         tp.setExpanded(false);
         tp.setAnimated(false);
-        // --- STILE PIATTO MODERNO ---
-        tp.setStyle("-fx-font-weight: bold; -fx-text-fill: #4b5563; -fx-box-border: transparent; -fx-background-color: transparent;");
+        tp.getStyleClass().add("modern-titled-pane");
         root.getChildren().add(tp);
     }
 
-    // ---- Core Grid Builder ----
-
     private static Node buildGroupGrid(List<Map.Entry<String, ? extends Number>> items) {
-        // Filtro finale di sicurezza (anche se già fatto a monte)
         List<Map.Entry<String, ? extends Number>> filtered = new ArrayList<>();
         for(var e : items) {
             if(!shouldHideEntry(e.getValue())) filtered.add(e);
         }
 
-        if (filtered.isEmpty()) return new VBox(0); // Return empty node instead of empty grid
+        if (filtered.isEmpty()) return new VBox(0);
 
         filtered.sort(ENTRY_COMPARATOR);
 
@@ -197,12 +177,9 @@ public final class UiWidgets {
         for (var e : filtered) {
             Label keyLbl = new Label(e.getKey() + ":");
             keyLbl.getStyleClass().add("stat-key");
-            // Se manca il CSS esterno diamo un fallback pulito
-            keyLbl.setStyle("-fx-text-fill: #6b7280; -fx-font-size: 12px;");
 
             Label valLbl = new Label(formatValueForKey(e.getKey(), e.getValue()));
-            valLbl.getStyleClass().add("stat-val"); // Utile per CSS esterno
-            valLbl.setStyle("-fx-text-fill: #111827; -fx-font-size: 12px; -fx-font-weight: bold;");
+            valLbl.getStyleClass().add("stat-val");
 
             gp.add(keyLbl, 0, r);
             gp.add(valLbl, 1, r);
@@ -210,8 +187,6 @@ public final class UiWidgets {
         }
         return gp;
     }
-
-    // -------------------- FORMATTAZIONE --------------------
 
     private static final Pattern P_DEG = Pattern.compile("\\bdeg\\b|angle|yaw|pitch|roll", Pattern.CASE_INSENSITIVE);
     private static final Pattern P_PERCENT = Pattern.compile("%|bias|grip|pos(?!\\s*norm)", Pattern.CASE_INSENSITIVE);
@@ -259,7 +234,6 @@ public final class UiWidgets {
         return String.format(Locale.getDefault(), "%.2f", d);
     }
 
-    // Corner ordering: FL(0), FR(1), RL(2), RR(3), altri(9)
     private static final Pattern P_CORNER = Pattern.compile("\\b([FR][LR])\\b", Pattern.CASE_INSENSITIVE);
     private static int cornerRank(String key) {
         Matcher m = P_CORNER.matcher(key.toUpperCase(Locale.ROOT));
