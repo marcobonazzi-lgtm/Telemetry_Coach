@@ -41,15 +41,12 @@ public class EngineerChatPane {
 
     private final SplitPane splitPane = new SplitPane();
     private final VBox reportContent = new VBox(8);
-    private final ScrollPane reportScroll = new ScrollPane(reportContent);
-    private final TitledPane mainReportPane;
 
     private final ListView<ChatMessage> chatList = new ListView<>();
     private final TextField chatInput = new TextField();
     private final Button sendButton = new Button("Invia");
     private final ToggleButton audioButton = new ToggleButton("🔇"); // Pulsante Mute/Unmute
     private final ProgressIndicator aiSpinner = new ProgressIndicator();
-    private final TitledPane aiBetaPane;
 
     private String currentTechnicalContext = "";
     private boolean isCoolingDown = false;
@@ -57,12 +54,13 @@ public class EngineerChatPane {
 
     public EngineerChatPane() {
         // Setup Report View (Parte Superiore)
+        ScrollPane reportScroll = new ScrollPane(reportContent);
         reportScroll.setFitToWidth(true);
         reportScroll.setHbarPolicy(ScrollPane.ScrollBarPolicy.NEVER);
         reportScroll.getStyleClass().add("analysis-scroll-pane");
         reportContent.setPadding(new Insets(15));
 
-        mainReportPane = new TitledPane("RAPPORTO INGEGNERE (Dati Ufficiali)", reportScroll);
+        TitledPane mainReportPane = new TitledPane("RAPPORTO INGEGNERE (Dati Ufficiali)", reportScroll);
         mainReportPane.setCollapsible(false);
         mainReportPane.setMaxHeight(Double.MAX_VALUE);
         mainReportPane.setStyle("-fx-font-weight: bold; -fx-font-size: 14px;");
@@ -82,11 +80,20 @@ public class EngineerChatPane {
         aiSpinner.setMaxSize(16, 16);
         aiSpinner.setVisible(false);
 
-        chatInput.setPromptText("Scrivi qui... (Consiglio: fai una domanda alla volta)");
         chatInput.getStyleClass().add("chat-input");
         HBox.setHgrow(chatInput, Priority.ALWAYS);
-
         sendButton.getStyleClass().add("button-primary");
+
+        if (!GeminiService.isPremium()) {
+            chatInput.setDisable(true);
+            sendButton.setDisable(true);
+            chatInput.setPromptText("🔒 Sblocca il Premium per chattare con l'Ingegnere");
+        } else {
+            chatInput.setDisable(false);
+            sendButton.setDisable(false);
+            chatInput.setPromptText("Scrivi qui... (Consiglio: fai una domanda alla volta)");
+        }
+
         sendButton.setOnAction(e -> sendMessage());
         chatInput.setOnKeyPressed(e -> { if (e.getCode() == KeyCode.ENTER) sendMessage(); });
 
@@ -100,7 +107,7 @@ public class EngineerChatPane {
         chatContainer.setPadding(new Insets(10));
         VBox.setVgrow(chatList, Priority.ALWAYS);
 
-        aiBetaPane = new TitledPane("ASSISTENTE AI (BETA)", chatContainer);
+        TitledPane aiBetaPane = new TitledPane("ASSISTENTE AI (BETA)", chatContainer);
         aiBetaPane.setCollapsible(false);
         aiBetaPane.setMaxHeight(Double.MAX_VALUE);
         aiBetaPane.setStyle("-fx-font-size: 12px;");
@@ -162,8 +169,9 @@ public class EngineerChatPane {
         CompletableFuture.supplyAsync(() -> {
             var style = SetupAdvisor.analyzeStyle(session);
             var recs = SetupAdvisor.forLap(lap, style);
+            var tyre = SetupAdvisor.suggestTyreCompound(session, style);
             List<String> notes = org.simulator.coach.Coach.generateNotes(lap);
-            return new AnalysisResult(recs, notes);
+            return new AnalysisResult(recs, notes, tyre);
         }).thenAcceptAsync(this::fillReportUI, Platform::runLater);
     }
 
@@ -175,17 +183,17 @@ public class EngineerChatPane {
 
         String separatorMsg = "--- 📊 Analisi spostata sull'intera Sessione ---";
         addSeparatorIfNeeded(separatorMsg);
-
         CompletableFuture.supplyAsync(() -> {
             var style = SetupAdvisor.analyzeStyle(laps);
             var recs = SetupAdvisor.forSession(laps, style);
+            var tyre = SetupAdvisor.suggestTyreCompound(laps, style);
             List<String> notes = org.simulator.coach.CoachSession.generateSessionNotes(laps);
-            return new AnalysisResult(recs, notes);
+            return new AnalysisResult(recs, notes, tyre);
         }).thenAcceptAsync(this::fillReportUI, Platform::runLater);
     }
 
     private void addSeparatorIfNeeded(String msg) {
-        if (GLOBAL_HISTORY.isEmpty() || !GLOBAL_HISTORY.get(GLOBAL_HISTORY.size()-1).text.equals(msg)) {
+        if (GLOBAL_HISTORY.isEmpty() || !GLOBAL_HISTORY.getLast().text.equals(msg)) {
             Platform.runLater(() -> {
                 GLOBAL_HISTORY.add(new ChatMessage(msg, false));
                 chatList.scrollTo(GLOBAL_HISTORY.size() - 1);
@@ -212,7 +220,7 @@ public class EngineerChatPane {
             for (String note : res.coachNotes) {
                 SetupAdvisor.Severity sev = SetupAdvisor.Severity.MEDIUM;
                 if (note.contains("!")) sev = SetupAdvisor.Severity.HIGH;
-                String clean = note.replaceAll("\\[.*?\\]", "").replace("Coach:", "").replace("Sessione:", "").trim();
+                String clean = note.replaceAll("\\[.*?]", "").replace("Coach:", "").replace("Sessione:", "").trim();
                 reportContent.getChildren().add(createAdviceRow(sev, clean));
             }
         }
@@ -292,7 +300,7 @@ public class EngineerChatPane {
         }).start();
     }
 
-    private record AnalysisResult(List<SetupAdvisor.Recommendation> recs, List<String> coachNotes) {}
+    private record AnalysisResult(List<SetupAdvisor.Recommendation> recs, List<String> coachNotes, org.simulator.setup.TyreCompoundAdvisor.Choice tyreChoice) {}
     private record ChatMessage(String text, boolean isUser) {}
 
     private static class ChatCell extends ListCell<ChatMessage> {
