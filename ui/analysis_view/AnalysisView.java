@@ -250,7 +250,20 @@ public class AnalysisView {
             Node engineerNode = engineerUI.getRoot();
             VBox.setVgrow(engineerNode, Priority.ALWAYS);
 
-            body.getChildren().setAll(row, engineerNode);
+            // Controllo Premium sincronizzato
+            if (!org.simulator.gemini.GeminiService.isPremium()) {
+                Button btnPremium = new Button("Sblocca Premium 🏆 (Analisi Illimitate)");
+                btnPremium.setStyle("-fx-background-color: #ffd700; -fx-text-fill: black; -fx-font-weight: bold; -fx-cursor: hand; -fx-padding: 8 16; -fx-font-size: 14px;");
+                btnPremium.setOnAction(e -> {
+                    org.simulator.gemini.GeminiService.unlockPremium(); // Sblocca globalmente
+                    btnPremium.setText("Premium Attivo ✅");
+                    btnPremium.setStyle("-fx-background-color: #4CAF50; -fx-text-fill: white; -fx-font-weight: bold; -fx-padding: 8 16; -fx-font-size: 14px;");
+                    btnPremium.setDisable(true);
+                });
+                body.getChildren().setAll(row, btnPremium, engineerNode);
+            } else {
+                body.getChildren().setAll(row, engineerNode);
+            }
             body.setPadding(new Insets(4,10,10,10));
             body.setFillWidth(true);
 
