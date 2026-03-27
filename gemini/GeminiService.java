@@ -11,16 +11,20 @@ import java.util.List;
 
 public class GeminiService {
 
-    // ⚠️ LA TUA CHIAVE API
-    private static final String API_KEY = "";
+    // INCOLLA QUI LA TUA CHIAVE API A PAGAMENTO (quella col limite di 2 euro)
+    private static final String API_KEY = "".trim();
 
-    private static final String ENDPOINT = "https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=" + API_KEY;
+    // Usiamo il 2.5 Flash: economico, veloce e intelligente
+    private static final String ENDPOINT = "https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=" + API_KEY;
 
     private static final HttpClient client = HttpClient.newBuilder()
             .connectTimeout(Duration.ofSeconds(20))
             .build();
 
-    // --- MEMORIA DELLA CHAT ---
+    // --- GESTIONE LICENZA HARD-BLOCK ---
+    // Di default l'app parte bloccata. Solo il tasto Premium può sbloccarla.
+    private static boolean isPremium = false;
+
     public static class ChatMessage {
         String role;
         String text;
@@ -31,45 +35,55 @@ public class GeminiService {
         }
     }
 
-    // Lista statica per mantenere la memoria tra le chiamate
     private static final List<ChatMessage> history = new ArrayList<>();
+    private static final int MAX_HISTORY = 6;
 
-    // DA CHIAMARE SOLO QUANDO SI CARICA UN NUOVO FILE CSV
     public static void clearHistory() {
         history.clear();
     }
 
+    public static void unlockPremium() {
+        isPremium = true;
+    }
+
+    public static boolean isPremium() {
+        return isPremium;
+    }
+
     public static String chat(String userMessage, String technicalContext) {
+        // BLOCCO TOTALE SE NON È PREMIUM (Costringe all'acquisto)
+        if (!isPremium) {
+            return "🔒 L'Ingegnere di Pista AI è una funzionalità PRO! Clicca sul pulsante giallo 'Sblocca Premium' per attivare l'analisi istantanea del tuo stile di guida e dei setup.";
+        }
+
         if (API_KEY == null || API_KEY.length() < 30 || API_KEY.contains("INCOLLA_QUI")) {
             return "ERRORE: Chiave API non configurata.";
         }
 
         try {
-            // 1. Aggiungi messaggio utente alla storia
             history.add(new ChatMessage("user", userMessage));
 
+            // NUOVO PROMPT: Discorsivo, amichevole ma super compatto (max 3-4 frasi)
             String systemPrompt = "Sei un Coach di Guida Virtuale per sim-racing (Assetto Corsa), esperto ma dal tono amichevole, discorsivo e incoraggiante. " +
-                    "Immagina di parlare al pilota nei box: il tuo obiettivo è fargli capire dove migliorare spiegando i concetti a parole, non solo snocciolando numeri.\n\n" +
-
+                    "Immagina di parlare al pilota nei box: il tuo obiettivo è fargli capire dove migliorare spiegando i concetti a parole.\n\n" +
                     "LINEE GUIDA COMPORTAMENTO:\n" +
-                    "1. SE L'UTENTE SALUTA (es. 'Ciao'): Rispondi in modo naturale e simpatico, senza forzare subito l'analisi tecnica.\n" +
-                    "2. STILE DISCORSIVO: Quando analizzi i dati, EVITA il più possibile liste puntate schematiche o 'copia-incolla'. Integra i numeri nel discorso (es. 'Ho visto che le gomme sono un po' calde, siamo sui 98 gradi, prova a gestire meglio...').\n" +
-                    "3. SIINTESI INTELLIGENTE: Usa i dati forniti sotto, ma concentrati solo su ciò che è rilevante per la domanda o per il problema principale del pilota.\n" +
+                    "1. STILE DISCORSIVO: EVITA assolutamente le liste puntate schematiche o i comandi stile robot. Parla in modo naturale.\n" +
+                    "2. BREVITÀ (FONDAMENTALE): Devi essere molto conciso. Usa MASSIMO 3 o 4 frasi per rispondere. Vai dritto al consiglio principale senza dilungarti.\n" +
+                    "3. NUMERI: Integra i dati nel discorso (es. 'Ho visto che le gomme anteriori sono sui 98 gradi, un po' caldine, prova a...').\n" +
                     "4. Rispondi sempre in italiano.\n\n" +
+                    "DATI TELEMETRICI DELLA SESSIONE:\n" + (technicalContext != null ? technicalContext : "");
 
-                    "DATI TELEMETRICI DELLA SESSIONE:\n" + technicalContext;
-            // 3. Costruzione JSON con Storia completa
             StringBuilder jsonBuilder = new StringBuilder();
             jsonBuilder.append("{");
 
-            // System Instruction
             jsonBuilder.append("\"system_instruction\": {");
             jsonBuilder.append("\"parts\": [{ \"text\": \"").append(escapeJson(systemPrompt)).append("\" }]");
             jsonBuilder.append("},");
 
-            // Contents (Storia)
             jsonBuilder.append("\"contents\": [");
-            for (int i = 0; i < history.size(); i++) {
+
+            int startIdx = Math.max(0, history.size() - MAX_HISTORY);
+            for (int i = startIdx; i < history.size(); i++) {
                 ChatMessage msg = history.get(i);
                 jsonBuilder.append("{");
                 jsonBuilder.append("\"role\": \"").append(msg.role).append("\",");
@@ -90,17 +104,21 @@ public class GeminiService {
 
             if (response.statusCode() == 200) {
                 String responseText = extractTextFromResponse(response.body());
-                // 4. Aggiungi risposta AI alla storia
                 history.add(new ChatMessage("model", responseText));
                 return responseText;
             } else if (response.statusCode() == 429) {
-                return "🚦 Troppe richieste! Riprova tra 30 secondi.";
+                history.remove(history.size() - 1);
+                return "🚦 Troppe richieste! Riprova tra poco.";
             } else {
+                history.remove(history.size() - 1);
                 return "Errore API (" + response.statusCode() + ")";
             }
 
         } catch (Exception e) {
             e.printStackTrace();
+            if (!history.isEmpty() && history.get(history.size() - 1).role.equals("user")) {
+                history.remove(history.size() - 1);
+            }
             return "Errore di Connessione: " + e.getMessage();
         }
     }
@@ -143,5 +161,4 @@ public class GeminiService {
                 .replace("\n", "\\n")
                 .replace("\r", "");
     }
-
 }
