@@ -250,12 +250,17 @@ public class AnalysisView {
             Node engineerNode = engineerUI.getRoot();
             VBox.setVgrow(engineerNode, Priority.ALWAYS);
 
-            // Controllo Premium sincronizzato
             if (!org.simulator.gemini.GeminiService.isPremium()) {
                 Button btnPremium = new Button("Sblocca Premium 🏆 (Analisi Illimitate)");
                 btnPremium.setStyle("-fx-background-color: #ffd700; -fx-text-fill: black; -fx-font-weight: bold; -fx-cursor: hand; -fx-padding: 8 16; -fx-font-size: 14px;");
+
                 btnPremium.setOnAction(e -> {
-                    org.simulator.gemini.GeminiService.unlockPremium(); // Sblocca globalmente
+                    org.simulator.gemini.GeminiService.unlockPremium(); // Sblocca il back-end
+
+                    // --- QUESTA È LA RIGA MAGICA CHE MANCAVA ---
+                    engineerUI.unlockUI();
+                    // -------------------------------------------
+
                     btnPremium.setText("Premium Attivo ✅");
                     btnPremium.setStyle("-fx-background-color: #4CAF50; -fx-text-fill: white; -fx-font-weight: bold; -fx-padding: 8 16; -fx-font-size: 14px;");
                     btnPremium.setDisable(true);
