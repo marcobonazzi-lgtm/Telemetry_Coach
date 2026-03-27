@@ -148,8 +148,25 @@ public class EngineerChatPane {
 
     public Node getRoot() { return splitPane; }
 
+
     public void setTrackInfo(TrackInfo t) {
         this.currentTrackInfo = t;
+    }
+
+    // --- NUOVO METODO PER SBLOCCARE L'INTERFACCIA ---
+    public void unlockUI() {
+        Platform.runLater(() -> {
+            chatInput.setDisable(false);
+            sendButton.setDisable(false);
+            chatInput.setPromptText("Scrivi qui... (Consiglio: fai una domanda alla volta)");
+            chatInput.requestFocus();
+
+            // Opzionale: un piccolo messaggio di benvenuto nella chat
+            if (GLOBAL_HISTORY.isEmpty() || !GLOBAL_HISTORY.getLast().text().contains("Connessione stabilita")) {
+                GLOBAL_HISTORY.add(new ChatMessage("✅ Connessione stabilita. Sono pronto ad analizzare i tuoi dati!", false));
+                chatList.scrollTo(GLOBAL_HISTORY.size() - 1);
+            }
+        });
     }
 
     public void setContextMode(boolean isSingleLap) {
