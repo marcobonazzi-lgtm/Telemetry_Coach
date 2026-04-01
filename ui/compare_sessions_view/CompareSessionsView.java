@@ -87,7 +87,7 @@ public class CompareSessionsView {
         Button loadRightBtn = new Button("Confronta nuovo CSV…");
         // RIMOSSO STYLE HARDCODED
         loadRightBtn.getStyleClass().add("action-button");
-        loadRightBtn.setOnAction(e -> chooseAndLoadRightCsv());
+        loadRightBtn.setOnAction(_ -> chooseAndLoadRightCsv());
 
         HBox selectors = new HBox(12,
                 new Label("Giro SX"), leftLapSelector,
@@ -133,19 +133,19 @@ public class CompareSessionsView {
         configureLapSelector(leftLapSelector, baseData);
         configureLapSelector(rightLapSelector, cmpData);
 
-        leftLapSelector.valueProperty().addListener((o, ov, nv) -> {
+        leftLapSelector.valueProperty().addListener((_, _, nv) -> {
             this.leftLap = findLap(baseData.getLaps(), nv);
             updateViewChain();
         });
-        rightLapSelector.valueProperty().addListener((o, ov, nv) -> {
+        rightLapSelector.valueProperty().addListener((_, _, nv) -> {
             this.rightLap = findLap(cmpData.getLaps(), nv);
             updateViewChain();
         });
-        plotTypeSelector.valueProperty().addListener((o, ov, nv) -> updateViewChain());
+        plotTypeSelector.valueProperty().addListener((_, _, _) -> updateViewChain());
     }
 
     private void configureLapSelector(ComboBox<Integer> combo, DataController dc) {
-        combo.setCellFactory(cb -> new ListCell<>() {
+        combo.setCellFactory(_ -> new ListCell<>() {
             @Override protected void updateItem(Integer idx, boolean empty) {
                 super.updateItem(idx, empty);
                 setText((empty || idx==null) ? null : labelForLap(dc.getLaps(), idx));
@@ -167,7 +167,7 @@ public class CompareSessionsView {
     private void updateViewChain() {
         if (leftLap == null) {
             var laps = baseData.getLaps();
-            if (laps != null && !laps.isEmpty()) leftLap = laps.get(0);
+            if (laps != null && !laps.isEmpty()) leftLap = laps.getFirst();
         }
 
         Lap effectiveLeft = leftLap;
@@ -200,12 +200,11 @@ public class CompareSessionsView {
             cachedCurves = loadTrackCurves(currentTrack);
         }
 
-        CompletableFuture.supplyAsync(() -> {
-            return new CompareCoach().compare(sx, dx, cachedCurves);
-        }).thenAcceptAsync(result -> {
-            Node content = buildAnalysisContent(sx, dx, result);
-            rightContentBox.getChildren().setAll(content);
-        }, Platform::runLater);
+        CompletableFuture.supplyAsync(() -> new CompareCoach().compare(sx, dx, cachedCurves))
+                .thenAcceptAsync(result -> {
+                    Node content = buildAnalysisContent(sx, dx, result);
+                    rightContentBox.getChildren().setAll(content);
+                }, Platform::runLater);
     }
 
     private Node buildAnalysisContent(Lap sx, Lap dx, CompareCoach.Result r) {
@@ -229,7 +228,7 @@ public class CompareSessionsView {
         if (accNode instanceof Accordion acc) {
             String status = lap.validityStatus(dc.getLaps());
             if (!acc.getPanes().isEmpty()) {
-                TitledPane first = acc.getPanes().get(0);
+                TitledPane first = acc.getPanes().getFirst();
                 Node content = first.getContent();
                 first.setContent(new VBox(4, new Label("Stato: " + status), content));
             }
@@ -252,9 +251,9 @@ public class CompareSessionsView {
         VBox v = new VBox(10, narrative);
 
         if (!isWarning) {
-            // Liste miglioramenti/peggioramenti - Passiamo la classe CSS
-            Node improvements = listBlock("Miglioramenti (DX meglio di SX)", r.improvements, 5, df, "improvement-list");
-            Node regressions = listBlock("Peggioramenti (DX peggio di SX)", r.regressions, 5, df, "regression-list");
+            // Liste miglioramenti/peggioramenti - Rimosso il parametro hardcoded 5
+            Node improvements = listBlock("Miglioramenti (DX meglio di SX)", r.improvements, df, "improvement-list");
+            Node regressions = listBlock("Peggioramenti (DX peggio di SX)", r.regressions, df, "regression-list");
 
             // Tabelle dati
             Node table = diffGrid("Tabella Differenze Chiave", r.topTable, df);
@@ -274,11 +273,10 @@ public class CompareSessionsView {
 
             // --- TABELLA CURVE CON LEGENDA ---
             if (!r.cornerFindings.isEmpty()) {
-                Label legend = new Label(
-                        "LEGENDA: I valori indicano (Comparata - Attuale).\n" +
-                                "• Verde (Negativo): La Comparata (DX) è più veloce/migliore.\n" +
-                                "• Rosso (Positivo): La Comparata (DX) è più lenta/peggiore."
-                );
+                Label legend = new Label("""
+                        LEGENDA: I valori indicano (Comparata - Attuale).
+                        • Verde (Negativo): La Comparata (DX) è più veloce/migliore.
+                        • Rosso (Positivo): La Comparata (DX) è più lenta/peggiore.""");
                 legend.getStyleClass().add("legend-label");
 
                 TableView<CornerFinding> tbl = buildCornerTable(r.cornerFindings);
@@ -302,10 +300,10 @@ public class CompareSessionsView {
         return wrap;
     }
 
-    private Node listBlock(String title, List<CompareCoach.Item> items, int max, DecimalFormat df, String cssClass) {
+    private Node listBlock(String title, List<CompareCoach.Item> items, DecimalFormat df, String cssClass) {
         if (items.isEmpty()) return null;
         VBox rows = new VBox(4);
-        items.stream().limit(max).forEach(it -> {
+        items.stream().limit(5).forEach(it -> {
             String sign = it.delta() > 0 ? "+" : "";
             rows.getChildren().add(new Label("• " + it.name() + ": " + sign + df.format(it.delta())));
         });
@@ -350,14 +348,43 @@ public class CompareSessionsView {
         colName.setCellValueFactory(d -> new ReadOnlyObjectWrapper<>(d.getValue().cornerName()));
         colName.setPrefWidth(110);
 
-        // 3. Colonna Delta Tempo
+        // 3. Colonna Delta Tempo (Estratta in metodo privato per pulizia)
+        TableColumn<CornerFinding, String> colDt = createDeltaTimeColumn();
+
+        // 4. Colonna Delta Vmin
+        TableColumn<CornerFinding, String> colDv = new TableColumn<>("Δ Vmin");
+        colDv.setCellValueFactory(d -> new ReadOnlyObjectWrapper<>(String.format("%+.0f km/h", d.getValue().deltaSpeedMin())));
+        colDv.setStyle("-fx-alignment: CENTER-RIGHT;");
+        colDv.setPrefWidth(70);
+
+        // 5. Colonna Consiglio
+        TableColumn<CornerFinding, String> colAdv = new TableColumn<>("Consiglio");
+        colAdv.setCellValueFactory(d -> new ReadOnlyObjectWrapper<>(d.getValue().advice()));
+        colAdv.setMinWidth(350);
+        colAdv.setPrefWidth(450);
+
+        // Aggiunte singolarmente per evitare l'avviso "Unchecked generics array creation"
+        table.getColumns().add(colNum);
+        table.getColumns().add(colName);
+        table.getColumns().add(colDt);
+        table.getColumns().add(colDv);
+        table.getColumns().add(colAdv);
+
+        table.setColumnResizePolicy(TableView.UNCONSTRAINED_RESIZE_POLICY);
+        table.getItems().setAll(findings);
+        table.setPrefHeight(280);
+
+        return table;
+    }
+
+    private TableColumn<CornerFinding, String> createDeltaTimeColumn() {
         TableColumn<CornerFinding, String> colDt = new TableColumn<>("Δ Tempo");
         colDt.setCellValueFactory(d -> new ReadOnlyObjectWrapper<>(String.format("%+.3f s", d.getValue().deltaTime())));
-        colDt.setCellFactory(column -> new TableCell<>() {
+        colDt.setCellFactory(_ -> new TableCell<>() {
             @Override
             protected void updateItem(String item, boolean empty) {
                 super.updateItem(item, empty);
-                getStyleClass().removeAll("delta-good", "delta-bad", "delta-neutral"); // Pulisci vecchie classi
+                getStyleClass().removeAll("delta-good", "delta-bad", "delta-neutral");
 
                 if (empty || item == null) {
                     setText(null);
@@ -375,25 +402,7 @@ public class CompareSessionsView {
             }
         });
         colDt.setPrefWidth(80);
-
-        // 4. Colonna Delta Vmin
-        TableColumn<CornerFinding, String> colDv = new TableColumn<>("Δ Vmin");
-        colDv.setCellValueFactory(d -> new ReadOnlyObjectWrapper<>(String.format("%+.0f km/h", d.getValue().deltaSpeedMin())));
-        colDv.setStyle("-fx-alignment: CENTER-RIGHT;");
-        colDv.setPrefWidth(70);
-
-        // 5. Colonna Consiglio
-        TableColumn<CornerFinding, String> colAdv = new TableColumn<>("Consiglio");
-        colAdv.setCellValueFactory(d -> new ReadOnlyObjectWrapper<>(d.getValue().advice()));
-        colAdv.setMinWidth(350);
-        colAdv.setPrefWidth(450);
-
-        table.getColumns().addAll(colNum, colName, colDt, colDv, colAdv);
-        table.setColumnResizePolicy(TableView.UNCONSTRAINED_RESIZE_POLICY);
-        table.getItems().setAll(findings);
-        table.setPrefHeight(280);
-
-        return table;
+        return colDt;
     }
 
     private String resolveTrackName(Lap l, DataController dc) {
@@ -401,6 +410,7 @@ public class CompareSessionsView {
         if (dc.getCsvPath() != null) return AcSectionsLoader.normalizeVenue(dc.getCsvPath().getFileName().toString());
         return null;
     }
+
     private List<CurveSegment> loadTrackCurves(String trackName) {
         if (trackName == null) return null;
         var acSections = AcSectionsLoader.tryLoadFromVenue(trackName);
@@ -417,6 +427,7 @@ public class CompareSessionsView {
         }
         return null;
     }
+
     private void chooseAndLoadRightCsv() {
         if (stageForChooser == null) return;
         FileChooser fc = new FileChooser();
@@ -435,16 +446,19 @@ public class CompareSessionsView {
             });
         }
     }
+
     private void refreshLeftLapSelector() {
         List<Lap> laps = baseData.getLaps();
         leftLapSelector.getItems().setAll(laps.stream().map(l -> l.index).toList());
         if (!laps.isEmpty()) leftLapSelector.getSelectionModel().select(0);
     }
+
     private void refreshRightLapSelector() {
         List<Lap> laps = cmpData.getLaps();
         rightLapSelector.getItems().setAll(laps.stream().map(l -> l.index).toList());
         if (!laps.isEmpty()) rightLapSelector.getSelectionModel().select(0);
     }
+
     private Lap findLap(List<Lap> laps, Integer index) {
         if (laps == null || index == null) return null;
         return laps.stream().filter(l -> Objects.equals(l.index, index)).findFirst().orElse(null);
