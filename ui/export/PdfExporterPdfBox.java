@@ -23,6 +23,7 @@ import org.simulator.ui.DataController;
 import org.apache.pdfbox.pdmodel.graphics.state.PDExtendedGraphicsState;
 
 import javax.imageio.ImageIO;
+import java.awt.Color;
 import java.awt.image.BufferedImage;
 import java.io.BufferedReader;
 import java.io.File;
@@ -46,6 +47,7 @@ import org.simulator.tracks.SessionPreamble;
 import org.simulator.tracks.StaticTrackDB;
 import org.simulator.tracks.TrackInfo;
 
+@SuppressWarnings({"unused", "DuplicatedCode", "SpellCheckingInspection", "JavaReflectionMemberAccess", "SameParameterValue"})
 public class PdfExporterPdfBox implements PdfExporter {
 
     // Sottotitolo cover (veicolo + tracciato)
@@ -82,11 +84,11 @@ public class PdfExporterPdfBox implements PdfExporter {
 
             // ---- veicolo ----
             String carName = null;
-            try { carName = (String) SessionPreamble.class.getField("car").get(preSubtitle); } catch (Throwable __) {}
-            if (carName == null) { try { carName = (String) SessionPreamble.class.getMethod("car").invoke(preSubtitle); } catch (Throwable __) {} }
-            if (carName == null) { try { carName = (String) SessionPreamble.class.getMethod("getCar").invoke(preSubtitle); } catch (Throwable __) {} }
-            if (carName == null) { try { carName = (String) SessionPreamble.class.getMethod("vehicle").invoke(preSubtitle); } catch (Throwable __) {} }
-            if (carName == null) { try { carName = (String) SessionPreamble.class.getMethod("getVehicle").invoke(preSubtitle); } catch (Throwable __) {} }
+            try { carName = (String) SessionPreamble.class.getField("car").get(preSubtitle); } catch (Exception ignored) {}
+            if (carName == null) { try { carName = (String) SessionPreamble.class.getMethod("car").invoke(preSubtitle); } catch (Exception ignored) {} }
+            if (carName == null) { try { carName = (String) SessionPreamble.class.getMethod("getCar").invoke(preSubtitle); } catch (Exception ignored) {} }
+            if (carName == null) { try { carName = (String) SessionPreamble.class.getMethod("vehicle").invoke(preSubtitle); } catch (Exception ignored) {} }
+            if (carName == null) { try { carName = (String) SessionPreamble.class.getMethod("getVehicle").invoke(preSubtitle); } catch (Exception ignored) {} }
             // fallback CSV
             if (carName == null || carName.isBlank()) {
                 carName = tryReadVehicleFromCsv(data.getCsvPath());
@@ -94,18 +96,18 @@ public class PdfExporterPdfBox implements PdfExporter {
 
             // ---- utente/pilota ----
             String userName = null;
-            try { userName = (String) SessionPreamble.class.getField("driver").get(preSubtitle); } catch (Throwable __) {}
-            if (userName == null) { try { userName = (String) SessionPreamble.class.getMethod("driver").invoke(preSubtitle); } catch (Throwable __) {} }
-            if (userName == null) { try { userName = (String) SessionPreamble.class.getMethod("getDriver").invoke(preSubtitle); } catch (Throwable __) {} }
-            if (userName == null) { try { userName = (String) SessionPreamble.class.getMethod("user").invoke(preSubtitle); } catch (Throwable __) {} }
-            if (userName == null) { try { userName = (String) SessionPreamble.class.getMethod("getUser").invoke(preSubtitle); } catch (Throwable __) {} }
+            try { userName = (String) SessionPreamble.class.getField("driver").get(preSubtitle); } catch (Exception ignored) {}
+            if (userName == null) { try { userName = (String) SessionPreamble.class.getMethod("driver").invoke(preSubtitle); } catch (Exception ignored) {} }
+            if (userName == null) { try { userName = (String) SessionPreamble.class.getMethod("getDriver").invoke(preSubtitle); } catch (Exception ignored) {} }
+            if (userName == null) { try { userName = (String) SessionPreamble.class.getMethod("user").invoke(preSubtitle); } catch (Exception ignored) {} }
+            if (userName == null) { try { userName = (String) SessionPreamble.class.getMethod("getUser").invoke(preSubtitle); } catch (Exception ignored) {} }
 
             // sottotitolo finale
             String left  = (carName == null || carName.isBlank()) ? "Veicolo" : carName.trim();
             String right = (userName == null || userName.isBlank()) ? "" : userName.trim();
             reportSubtitle = right.isBlank() ? left : (left + " — " + right);
 
-        } catch (Throwable __) {
+        } catch (Exception ignored) {
             reportSubtitle = null;
         }
 
@@ -122,7 +124,8 @@ public class PdfExporterPdfBox implements PdfExporter {
 
         File work = java.nio.file.Files.createTempDirectory("tc_pdfbox_").toFile();
         work.deleteOnExit();
-        File chartsDir = new File(work, "charts"); chartsDir.mkdirs();
+        File chartsDir = new File(work, "charts");
+        boolean ignoredDirs = chartsDir.mkdirs();
 
         // Generazione Grafici Standard
         File speedOverlay = ChartGenerator.speedOverlay(chartsDir, lapsSel);
@@ -199,7 +202,7 @@ public class PdfExporterPdfBox implements PdfExporter {
             // SETUP
             if (options.includeSetup()) {
                 sections.add(new SectionRef("Setup",
-                        addSetupTablePage(doc, "Setup", data, options)));
+                        addSetupTablePage(doc, "Setup", data)));
             }
 
             // TOC + OUTLINE + NUMERI PAGINA
@@ -241,7 +244,6 @@ public class PdfExporterPdfBox implements PdfExporter {
                 float y = PAGE_SIZE.getHeight() - MARGIN;
                 y = drawHeading(cs, "Grafici principali", 18, y);
 
-                float imgWidth = CONTENT_WIDTH;
                 float maxImgHeight = (PAGE_SIZE.getHeight() - 2 * MARGIN - 60) / 2f;
 
                 for (int k = 0; k < chunk.size(); k++) {
@@ -249,7 +251,7 @@ public class PdfExporterPdfBox implements PdfExporter {
                     PDImageXObject im = imgs.get(k);
                     y -= 10;
                     if (im != null) {
-                        float scale = Math.min(imgWidth / im.getWidth(), maxImgHeight / im.getHeight());
+                        float scale = Math.min(CONTENT_WIDTH / im.getWidth(), maxImgHeight / im.getHeight());
                         float w = im.getWidth() * scale;
                         float h = im.getHeight() * scale;
                         float x = MARGIN + (CONTENT_WIDTH - w) / 2f;
@@ -299,9 +301,8 @@ public class PdfExporterPdfBox implements PdfExporter {
 
                 y -= 12;
                 if (tbImage != null) {
-                    float imgW = CONTENT_WIDTH;
                     float imgH = (PAGE_SIZE.getHeight() - 2 * MARGIN - 320);
-                    float scale = Math.min(imgW / tbImage.getWidth(), imgH / tbImage.getHeight());
+                    float scale = Math.min(CONTENT_WIDTH / tbImage.getWidth(), imgH / tbImage.getHeight());
                     float w = tbImage.getWidth() * scale;
                     float h = tbImage.getHeight() * scale;
                     float x = MARGIN + (CONTENT_WIDTH - w) / 2f;
@@ -316,7 +317,7 @@ public class PdfExporterPdfBox implements PdfExporter {
                     y -= 16;
                     y = drawHeading(cs, "Coaching - Giro " + lap.index, 14, y);
                     List<String> notes = coachNotesForLapList(lap.index, data);
-                    y = drawNotesTableInlineWrapped(cs, y, notes);
+                    drawNotesTableInlineWrapped(cs, y, notes);
                 }
             }
         }
@@ -363,7 +364,7 @@ public class PdfExporterPdfBox implements PdfExporter {
         return first;
     }
 
-    private PDPage addSetupTablePage(PDDocument doc, String title, DataController data, ExportOptions opts) throws Exception {
+    private PDPage addSetupTablePage(PDDocument doc, String title, DataController data) throws Exception {
         List<Lap> laps = data.getLaps();
         Assessment assess = SetupAdvisor.analyzeStyleDetailed(laps);
         DriverStyle style = assess.primary();
@@ -453,7 +454,7 @@ public class PdfExporterPdfBox implements PdfExporter {
                 y = drawKeyVal(cs, "Lunghezza [km]", "n/d", y);
                 y = drawKeyVal(cs, "Tipologia veicolo", traits.category.toString(), y);
                 y = drawHeading(cs, "Note personali", 14, y - 10);
-                y = drawBullet(cs, loadCircuitNotes(data), y);
+                drawBullet(cs, loadCircuitNotes(data), y);
             }
             return firstPage;
         }
@@ -505,8 +506,8 @@ public class PdfExporterPdfBox implements PdfExporter {
         if (img != null) {
             PDImageXObject im = loadImage(doc, img);
             if (im != null) {
-                float maxW = CONTENT_WIDTH, maxH = 220f;
-                float scale = Math.min(maxW / im.getWidth(), maxH / im.getHeight());
+                float maxH = 220f;
+                float scale = Math.min(CONTENT_WIDTH / im.getWidth(), maxH / im.getHeight());
                 float w = im.getWidth() * scale, h = im.getHeight() * scale;
                 float x = MARGIN + (CONTENT_WIDTH - w) / 2f;
                 y -= h + 8;
@@ -575,7 +576,7 @@ public class PdfExporterPdfBox implements PdfExporter {
         }
 
         // note personali, con possibile nuova pagina
-        if (opts.includeCircuitNotes()) {
+        if (opts != null && opts.includeCircuitNotes()) {
             float minNotes = 22f + 22f + 2 * baseRowH;
             if (y < MARGIN + minNotes) {
                 cs.close();
@@ -587,7 +588,7 @@ public class PdfExporterPdfBox implements PdfExporter {
             }
 
             y = drawHeading(cs, "Note personali", 14, y);
-            y = drawNotesTableInlineWrapped(cs, y,
+            drawNotesTableInlineWrapped(cs, y,
                     Arrays.asList(loadCircuitNotes(data).split("\\r?\\n")));
         }
 
@@ -627,7 +628,7 @@ public class PdfExporterPdfBox implements PdfExporter {
     }
     /* =============== TABELLE GENERICHE INLINE (per-lap / note) ================= */
 
-    private float drawNotesTableInlineWrapped(PDPageContentStream cs, float y, List<String> notes) throws Exception {
+    private void drawNotesTableInlineWrapped(PDPageContentStream cs, float y, List<String> notes) throws Exception {
         float baseRowH = 18f, headerH = 22f;
         float x = MARGIN;
         float[] widths = new float[]{ CONTENT_WIDTH * 0.10f, CONTENT_WIDTH * 0.90f };
@@ -638,7 +639,7 @@ public class PdfExporterPdfBox implements PdfExporter {
 
         if (notes == null || notes.isEmpty()) {
             drawTableRowWrapped(cs, new String[]{ "-", "Nessuna nota disponibile" }, x, y, widths, baseRowH, fontSize, true);
-            return y - baseRowH;
+            return;
         }
 
         for (int i = 0; i < notes.size(); i++) {
@@ -647,7 +648,6 @@ public class PdfExporterPdfBox implements PdfExporter {
             drawTableRowWrapped(cs, new String[]{ Integer.toString(i+1), notes.get(i) }, x, y, widths, baseRowH, fontSize, (i%2)==0);
             y -= rh;
         }
-        return y;
     }
 
     /* ======================== TABELLE CANALI ========================= */
@@ -716,12 +716,12 @@ public class PdfExporterPdfBox implements PdfExporter {
 
     private void drawTableHeader(PDPageContentStream cs, String[] cols, float x, float y, float[] w, float h) throws Exception {
         // background
-        cs.setNonStrokingColor(240/255f,240/255f,240/255f);
+        cs.setNonStrokingColor(new Color(240, 240, 240));
         cs.addRect(x, y - h, sum(w), h);
         cs.fill();
 
         // linea basso
-        cs.setStrokingColor(200/255f,200/255f,200/255f);
+        cs.setStrokingColor(new Color(200, 200, 200));
         cs.setLineWidth(GRID_THICKNESS);
         cs.moveTo(x, y - h);
         cs.lineTo(x + sum(w), y - h);
@@ -731,7 +731,7 @@ public class PdfExporterPdfBox implements PdfExporter {
         float cx = x + 4;
         for (int i = 0; i < cols.length; i++) {
             cs.beginText();
-            cs.setNonStrokingColor(0,0,0);
+            cs.setNonStrokingColor(Color.BLACK);
             cs.setFont(PDType1Font.HELVETICA_BOLD, 11);
             cs.newLineAtOffset(cx, y - h + 5);
             cs.showText(sanitizePdfText(cols[i]));
@@ -742,11 +742,11 @@ public class PdfExporterPdfBox implements PdfExporter {
 
     private void drawTableRow(PDPageContentStream cs, String[] cols, float x, float y, float[] w, float h, boolean zebra) throws Exception {
         if (zebra) {
-            cs.setNonStrokingColor(250/255f,250/255f,250/255f);
+            cs.setNonStrokingColor(new Color(250, 250, 250));
             cs.addRect(x, y - h, sum(w), h);
             cs.fill();
         }
-        cs.setStrokingColor(230/255f,230/255f,230/255f);
+        cs.setStrokingColor(new Color(230, 230, 230));
         cs.setLineWidth(GRID_THICKNESS);
         float vx = x;
         for (float ww : w) {
@@ -762,7 +762,7 @@ public class PdfExporterPdfBox implements PdfExporter {
         float cx = x + 4;
         for (int i = 0; i < cols.length; i++) {
             cs.beginText();
-            cs.setNonStrokingColor(0,0,0);
+            cs.setNonStrokingColor(Color.BLACK);
             cs.setFont(PDType1Font.HELVETICA, 10);
             cs.newLineAtOffset(cx, y - h + 4);
             cs.showText(trimToFit(cols[i], w[i] - 8, 10));
@@ -778,11 +778,11 @@ public class PdfExporterPdfBox implements PdfExporter {
         float h = measureRowHeightWrapped(cols, w, baseRowH, fontSize);
 
         if (zebra) {
-            cs.setNonStrokingColor(250/255f,250/255f,250/255f);
+            cs.setNonStrokingColor(new Color(250, 250, 250));
             cs.addRect(x, y - h, sum(w), h);
             cs.fill();
         }
-        cs.setStrokingColor(230/255f,230/255f,230/255f);
+        cs.setStrokingColor(new Color(230, 230, 230));
         cs.setLineWidth(GRID_THICKNESS);
         float vx = x;
         for (float ww : w) {
@@ -802,7 +802,7 @@ public class PdfExporterPdfBox implements PdfExporter {
             float ty = y - baseRowH + 4; // baseline prima riga
             for (String line : lines) {
                 cs.beginText();
-                cs.setNonStrokingColor(0,0,0);
+                cs.setNonStrokingColor(Color.BLACK);
                 cs.setFont(PDType1Font.HELVETICA, fontSize);
                 cs.newLineAtOffset(cx, ty);
                 cs.showText(line);
@@ -831,7 +831,7 @@ public class PdfExporterPdfBox implements PdfExporter {
         String[] words = text.split("\\s+");
         StringBuilder line = new StringBuilder();
         for (String w : words) {
-            int add = (line.length()==0 ? w.length() : w.length()+1);
+            int add = (line.isEmpty() ? w.length() : w.length()+1);
             if (line.length() + add > maxChars) {
                 if (!line.isEmpty()) { lines.add(line.toString()); line.setLength(0); }
                 // parola piu' lunga della riga: spezza
@@ -892,11 +892,12 @@ public class PdfExporterPdfBox implements PdfExporter {
 
             y = drawHeading(cs, "Indice", 16, y - 16);
             for (SectionRef sref : sections) {
-                y = drawLinkBullet(doc, tocPage, cs, sref.title, sref.page, y);
+                y = drawLinkBullet(tocPage, cs, sref.title, sref.page, y);
             }
         }
     }
-    private float drawLinkBullet(PDDocument doc, PDPage page, PDPageContentStream cs, String text, PDPage target, float y) throws Exception {
+
+    private float drawLinkBullet(PDPage page, PDPageContentStream cs, String text, PDPage target, float y) throws Exception {
         // testo
         cs.beginText();
         cs.setFont(PDType1Font.HELVETICA, 12);
@@ -1089,38 +1090,25 @@ public class PdfExporterPdfBox implements PdfExporter {
     private String channelLabel(Channel c){ return c.name().replace('_',' '); }
 
     private String unitOf(Channel c){
-        switch (c){
-            case SPEED: return "km/h";
-            case ENGINE_RPM:
-            case WHEEL_ANGULAR_SPEED_FL:
-            case WHEEL_ANGULAR_SPEED_FR:
-            case WHEEL_ANGULAR_SPEED_RL:
-            case WHEEL_ANGULAR_SPEED_RR: return "rpm";
-            case THROTTLE:
-            case BRAKE:
-            case BRAKE_BIAS: return "%";
-            case STEER_ANGLE: return "deg";
-            case CG_ACCEL_LATERAL:
-            case CG_ACCEL_LONGITUDINAL: return "g";
-            case TIRE_PRESSURE_FL:
-            case TIRE_PRESSURE_FR:
-            case TIRE_PRESSURE_RL:
-            case TIRE_PRESSURE_RR: return "bar";
-            case TIRE_TEMP_INNER_FL: case TIRE_TEMP_MIDDLE_FL: case TIRE_TEMP_OUTER_FL:
-            case TIRE_TEMP_INNER_FR: case TIRE_TEMP_MIDDLE_FR: case TIRE_TEMP_OUTER_FR:
-            case TIRE_TEMP_INNER_RL: case TIRE_TEMP_MIDDLE_RL: case TIRE_TEMP_OUTER_RL:
-            case TIRE_TEMP_INNER_RR: case TIRE_TEMP_MIDDLE_RR: case TIRE_TEMP_OUTER_RR:
-            case BRAKE_TEMP_FL: case BRAKE_TEMP_FR: case BRAKE_TEMP_RL: case BRAKE_TEMP_RR:
-                return "°C";
-            case TIRE_LOAD_FL: case TIRE_LOAD_FR: case TIRE_LOAD_RL: case TIRE_LOAD_RR: return "N";
-            case RIDE_HEIGHT_FL: case RIDE_HEIGHT_FR: case RIDE_HEIGHT_RL: case RIDE_HEIGHT_RR:
-            case SUSP_TRAVEL_FL: case SUSP_TRAVEL_FR: case SUSP_TRAVEL_RL: case SUSP_TRAVEL_RR:
-                return "mm";
-            default: return "-";
-        }
+        return switch (c){
+            case SPEED -> "km/h";
+            case ENGINE_RPM, WHEEL_ANGULAR_SPEED_FL, WHEEL_ANGULAR_SPEED_FR,
+                 WHEEL_ANGULAR_SPEED_RL, WHEEL_ANGULAR_SPEED_RR -> "rpm";
+            case THROTTLE, BRAKE, BRAKE_BIAS -> "%";
+            case STEER_ANGLE -> "deg";
+            case CG_ACCEL_LATERAL, CG_ACCEL_LONGITUDINAL -> "g";
+            case TIRE_PRESSURE_FL, TIRE_PRESSURE_FR, TIRE_PRESSURE_RL, TIRE_PRESSURE_RR -> "bar";
+            case TIRE_TEMP_INNER_FL, TIRE_TEMP_MIDDLE_FL, TIRE_TEMP_OUTER_FL,
+                 TIRE_TEMP_INNER_FR, TIRE_TEMP_MIDDLE_FR, TIRE_TEMP_OUTER_FR,
+                 TIRE_TEMP_INNER_RL, TIRE_TEMP_MIDDLE_RL, TIRE_TEMP_OUTER_RL,
+                 TIRE_TEMP_INNER_RR, TIRE_TEMP_MIDDLE_RR, TIRE_TEMP_OUTER_RR,
+                 BRAKE_TEMP_FL, BRAKE_TEMP_FR, BRAKE_TEMP_RL, BRAKE_TEMP_RR -> "°C";
+            case TIRE_LOAD_FL, TIRE_LOAD_FR, TIRE_LOAD_RL, TIRE_LOAD_RR -> "N";
+            case RIDE_HEIGHT_FL, RIDE_HEIGHT_FR, RIDE_HEIGHT_RL, RIDE_HEIGHT_RR,
+                 SUSP_TRAVEL_FL, SUSP_TRAVEL_FR, SUSP_TRAVEL_RL, SUSP_TRAVEL_RR -> "mm";
+            default -> "-";
+        };
     }
-
-    // --- missing helpers fixed ---
 
     private float sum(float[] arr){
         float s = 0f; for (float v : arr) s += v; return s;
@@ -1128,7 +1116,6 @@ public class PdfExporterPdfBox implements PdfExporter {
 
     private String trimToFit(String text, float maxWidth, int fontSize){
         String safe = sanitizePdfText(text);
-        if (safe == null) return "";
         float approxCharW = 0.5f * fontSize; // Helvetica approx
         int maxChars = Math.max(1, (int)(maxWidth / approxCharW));
         if (safe.length() <= maxChars) return safe;
@@ -1152,13 +1139,7 @@ public class PdfExporterPdfBox implements PdfExporter {
             return List.of();
         }
     }
-    private String coachNotesForLap(int lapIndex, DataController data){ // legacy
-        List<String> notes = coachNotesForLapList(lapIndex, data);
-        if (notes.isEmpty()) return "_Nessuna nota disponibile per questo giro._";
-        StringBuilder sb = new StringBuilder();
-        for (String n : notes) sb.append("- ").append(n).append('\n');
-        return sb.toString().trim();
-    }
+
     private List<String> coachNotesForSessionList(List<Lap> laps, DataController data){
         try {
             List<String> notes = Coach.generateSessionNotes(laps==null? List.of() : laps);
@@ -1167,7 +1148,6 @@ public class PdfExporterPdfBox implements PdfExporter {
             return List.of();
         }
     }
-
 
     private String loadCircuitNotes(DataController data){
         try {
@@ -1234,7 +1214,7 @@ public class PdfExporterPdfBox implements PdfExporter {
 
 
     /** Se il JSON fornisce un path immagine (es. "/assets/tracks/silverstone_GP.png"),
-     *  prova prima con quello; in fallback cerca per euristiche sul solo id. */
+     * prova prima con quello; in fallback cerca per euristiche sul solo id. */
     private File resolveImageFromHintOrId(String imageResourceHint, String id){
         File byHint = (imageResourceHint == null || imageResourceHint.isBlank())
                 ? null
@@ -1355,7 +1335,4 @@ public class PdfExporterPdfBox implements PdfExporter {
             }
         }
     }
-
-
-
 }
