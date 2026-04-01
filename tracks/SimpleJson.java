@@ -2,6 +2,7 @@ package org.simulator.tracks;
 import java.util.*;
 final class SimpleJson {
     private SimpleJson(){}
+    @SuppressWarnings("unchecked")
     public static Map<String,Object> parse(String json){
         Tok t=new Tok(json); Object v=val(t);
         if(!(v instanceof Map)) throw new IllegalArgumentException("Root non è oggetto");
